@@ -1,0 +1,15 @@
+---
+manifest_version: "1"
+name: attestations
+description: ~
+roles:
+  - id: attestations
+    provisioning:
+      strategy: create
+      deferred: false
+    dna:
+      bundled: "../dna/attestations.dna"
+      properties: ~
+      uuid: ~
+      version: ~
+      clone_limit: 0

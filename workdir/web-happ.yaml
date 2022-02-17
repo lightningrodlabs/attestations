@@ -1,0 +1,7 @@
+---
+manifest_version: "1"
+name: attestations
+ui:
+  bundled: "../ui/apps/attestations/ui.zip"
+happ_manifest:
+  bundled: "../dna/workdir/happ/attestations.happ"
