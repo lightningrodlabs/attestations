@@ -10,7 +10,6 @@ import {attestationsContext, Attestation, AttestationOutput, Dictionary, Signal}
 import { AttestationsStore } from "../attestations.store";
 import { AttestationsAttestation } from "./attestations-attestation";
 import { AttestationsAttestationDialog } from "./attestations-attestation-dialog";
-import { SlAvatar } from '@scoped-elements/shoelace';
 import { ScopedElementsMixin } from "@open-wc/scoped-elements";
 import {
   ListItem,
@@ -22,6 +21,7 @@ import {
   profilesStoreContext,
   ProfilesStore,
   Profile,
+  AgentAvatar
 } from "@holochain-open-dev/profiles";
 import {EntryHashB64} from "@holochain-open-dev/core-types";
 
@@ -47,14 +47,22 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
 
   _myProfile = new StoreSubscriber(this, () => this._profiles.myProfile);
   _myAttestations = new StoreSubscriber(this, () => this._store.myAttestations);
+  _searchAttestations = new StoreSubscriber(this, () => this._store.searchedAttestations);
 
+  
   /** Private properties */
+
+  @query('#search-field')
+  _searchField!: TextField;
+  @query('#search-button')
+  _searchButton!: Button;
 
   @query('#my-drawer')
   private _drawer!: Drawer;
 
   @state() _currentAttestationEh = "";
   @state() _currentTemplateEh = "";
+  @state() noneFound = false;
 
   private initialized = false;
   private initializing = false;
@@ -215,6 +223,38 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
         break;
     }
   }
+  async search() {
+    const result = await this._store.searchAttestations(this._searchField.value)
+    console.log("FISH",Object.keys(result).length)
+    if (Object.keys(result).length == 0) {
+      this.noneFound = true
+    }
+  }
+
+  makeMyAttestationList(entries: Dictionary<AttestationOutput>, display: string) {
+    return Object.entries(entries).map(
+      ([key, attestationObject]) => {
+        const attestation = attestationObject.content
+        return html`
+          <mwc-list-item class="attestation-li" .selected=${key == this._currentAttestationEh} value="${key}">
+          <attestations-attestation id="attestations-attestation" .currentAttestationEh=${attestationObject.hash} .display=${display}></attestations-attestation>
+          </mwc-list-item>
+          `
+      })
+  }
+
+
+  makeAttestationList(entries: Dictionary<AttestationOutput>, display: string) {
+    return Object.entries(entries).map(
+      ([key, attestationObject]) => {
+        const attestation = attestationObject.content
+        return html`
+          <li class="attestation-li" value="${key}">
+          <attestations-attestation id="attestations-attestation" .currentAttestationEh=${attestationObject.hash} .display=${display}></attestations-attestation>
+          </li>
+          `
+      })
+  }
 
   render() {
     if (!this._currentAttestationEh) {
@@ -222,18 +262,9 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     }
 
     /** Build attestation list */
-    const attestations = Object.entries(this._myAttestations.value).map(
-      ([key, attestationObject]) => {
-        const attestation = attestationObject.content
-        return html`
-          <mwc-list-item class="attestation-li" .selected=${key == this._currentAttestationEh} value="${key}">
-          <attestations-attestation id="attestations-attestation" .currentAttestationEh=${attestationObject.hash} .display=${"compact"}></attestations-attestation>
-          </mwc-list-item>
-          `
-      }
-    )
-
-
+    const attestations = this.makeMyAttestationList(this._myAttestations.value, "compact") 
+    const searched = this.makeAttestationList(this._searchAttestations.value, "compact") 
+    
     return html`
 <!--  DRAWER -->
 <mwc-drawer type="dismissible" id="my-drawer">
@@ -242,7 +273,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     <mwc-list-item twoline graphic="avatar" noninteractive>
       <span>${this.myNickName}</span>
       <span slot="secondary">${this._profiles.myAgentPubKey}</span>
-      <sl-avatar style="margin-left:-22px;" slot="graphic" .image=${this.myAvatar}></sl-avatar>
+      <agent-avatar size=50 slot="graphic" .agentPubKey=${this._profiles.myAgentPubKey}></agent-avatar>
     </mwc-list-item>
     <li divider role="separator"></li>
     </mwc-list>
@@ -269,6 +300,14 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     </mwc-top-app-bar>
 
     <div class="appBody">
+      <mwc-textfield id="search-field" type="text" label="search" @input=${() => this._searchButton.disabled = !Boolean(this._searchField.value)}></mwc-textfield>    
+      <mwc-button id="search-button" icon="search" @click=${async () => this.search()} disabled></mwc-button>
+  <!-- Attestation List -->
+    ${this.noneFound ? "Nothing found" : html`    
+    <ul id="searched-attestations-list" >
+      ${searched}
+    </ul>`}
+
       <attestations-attestation id="attestations-attestation" .currentAttestationEh=${this._currentAttestationEh}></attestations-attestation>
     </div>
 
@@ -298,7 +337,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
       "attestations-attestation-dialog" : AttestationsAttestationDialog,
       "attestations-attestation": AttestationsAttestation,
       "mwc-formfield": Formfield,
-      'sl-avatar': SlAvatar,
+      'agent-avatar': AgentAvatar,
     };
   }
 

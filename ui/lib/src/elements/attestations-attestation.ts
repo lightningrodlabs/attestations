@@ -8,9 +8,8 @@ import {sharedStyles} from "../sharedStyles";
 import {Attestation, AttestationOutput, attestationsContext} from "../types";
 import {AttestationsStore} from "../attestations.store";
 import {ScopedElementsMixin} from "@open-wc/scoped-elements";
-import {ProfilesStore, profilesStoreContext,} from "@holochain-open-dev/profiles";
+import {ProfilesStore, profilesStoreContext, AgentAvatar} from "@holochain-open-dev/profiles";
 //import {Button, Dialog, TextField, Fab, Slider} from "@scoped-elements/material-web";
-import { SlAvatar } from '@scoped-elements/shoelace';
 
 /**
  * @element attestations-attestation
@@ -49,12 +48,12 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
     const profile = this._knownProfiles.value[attestation.about]
     const folk = profile ? html`
     <li class="folk">
-          <sl-avatar .image=${profile.fields.avatar}></sl-avatar>
+          <agent-avatar agent-pub-key="${attestation.about}"></agent-avatar>
           <div>${profile.nickname}</div>
         </li>` :""
     switch (this.display) {
       case "compact":
-        return html`${attestation.content} <sl-avatar .image=${profile.fields.avatar}></sl-avatar>`
+        return html`${attestation.content} <agent-avatar agent-pub-key="${attestation.about}"></agent-avatar>`
         break;
       case "full":
       default:
@@ -70,7 +69,7 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
 
   static get scopedElements() {
     return {
-      'sl-avatar': SlAvatar,
+      'agent-avatar': AgentAvatar
     };
   }
   static get styles() {

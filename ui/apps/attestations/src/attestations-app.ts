@@ -27,7 +27,7 @@ export class AttestationsApp extends ScopedElementsMixin(LitElement) {
       client.cellDataByRoleId('attestations')!
     );
 
-    const store = new ProfilesStore(attestationsClient, {avatarMode: "avatar"})
+    const store = new ProfilesStore(attestationsClient, {avatarMode: "identicon"})
 
     store.fetchAllProfiles()
 

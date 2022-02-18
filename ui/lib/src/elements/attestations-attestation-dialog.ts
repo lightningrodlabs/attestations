@@ -6,14 +6,13 @@ import {contextProvided} from "@holochain-open-dev/context";
 import {ScopedElementsMixin} from "@open-wc/scoped-elements";
 import {AttestationsStore} from "../attestations.store";
 import {Attestation, attestationsContext} from "../types";
-import { SlAvatar } from '@scoped-elements/shoelace';
 import {EntryHashB64, AgentPubKeyB64} from "@holochain-open-dev/core-types";
 import {
   Button,
   Dialog,
   TextField
 } from "@scoped-elements/material-web";
-import {Profile, SearchAgent} from "@holochain-open-dev/profiles";
+import {Profile, SearchAgent, AgentAvatar} from "@holochain-open-dev/profiles";
 
 /**
  * @element attestations-attestation-dialog
@@ -100,7 +99,7 @@ export class AttestationsAttestationDialog extends ScopedElementsMixin(LitElemen
   render() {
     const about = this._profile ? html`
     <li class="folk">
-          <sl-avatar .image=${this._profile.fields.avatar}></sl-avatar>
+        <agent-avatar agent-pub-key="${this._about}"></agent-avatar>
           <div>${this._profile.nickname}</div>
         </li>` :""
     return html`
@@ -130,7 +129,7 @@ export class AttestationsAttestationDialog extends ScopedElementsMixin(LitElemen
       "mwc-dialog": Dialog,
       "mwc-textfield": TextField,
       "search-agent": SearchAgent,
-      'sl-avatar': SlAvatar,
+      'agent-avatar': AgentAvatar,
     };
   }
   static get styles() {

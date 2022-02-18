@@ -7,6 +7,7 @@ import {
   Dictionary,
   Attestation,
   AttestationOutput,
+  GetAttestationsInput,
 } from './types';
 import {
   ProfilesStore,
@@ -23,12 +24,14 @@ export class AttestationsStore {
 
   /** AttestationEh -> Attestation */
   private myAttestationsStore: Writable<Dictionary<AttestationOutput>> = writable({});
+  private searchedAttestationsStore: Writable<Dictionary<AttestationOutput>> = writable({});
   
   /** Static info */
   myAgentPubKey: AgentPubKeyB64;
 
   /** Readable stores */
   public myAttestations: Readable<Dictionary<AttestationOutput>> = derived(this.myAttestationsStore, i => i)
+  public searchedAttestations: Readable<Dictionary<AttestationOutput>> = derived(this.searchedAttestationsStore, i => i)
   
   constructor(
     protected cellClient: CellClient,
@@ -71,6 +74,27 @@ export class AttestationsStore {
     }
     return get(this.myAttestationsStore)
   }
+
+  async searchAttestations(search: string) : Promise<Dictionary<AttestationOutput>> {
+    const input : GetAttestationsInput = {}
+    if (search.startsWith("uhCA")) {
+      input.agent = search
+    } else {
+      input.content = search
+    }
+    console.log("searching for", input)
+    const attestationsOutputs = await this.service.getAttestations(input);
+    console.log({attestationsOutputs})
+    this.searchedAttestationsStore.update(attestations => {
+      attestations = {}
+      for (const a of attestationsOutputs) {
+        attestations[a.hash] = a
+      }
+      return attestations
+    })
+    return get(this.searchedAttestationsStore)
+  }
+
 
   async addAttestation(attestation: Attestation) : Promise<EntryHashB64> {
     const s: Attestation = {
