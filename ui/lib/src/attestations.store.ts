@@ -22,13 +22,13 @@ export class AttestationsStore {
   private profiles: ProfilesStore
 
   /** AttestationEh -> Attestation */
-  private attestationsStore: Writable<Dictionary<AttestationOutput>> = writable({});
+  private myAttestationsStore: Writable<Dictionary<AttestationOutput>> = writable({});
   
   /** Static info */
   myAgentPubKey: AgentPubKeyB64;
 
   /** Readable stores */
-  public attestations: Readable<Dictionary<AttestationOutput>> = derived(this.attestationsStore, i => i)
+  public myAttestations: Readable<Dictionary<AttestationOutput>> = derived(this.myAttestationsStore, i => i)
   
   constructor(
     protected cellClient: CellClient,
@@ -60,16 +60,16 @@ export class AttestationsStore {
     return this.profiles.fetchAgentProfile(agent)
   }
 
-  async pullAttestations() : Promise<Dictionary<AttestationOutput>> {
+  async pullMyAttestations() : Promise<Dictionary<AttestationOutput>> {
     const attestationsOutputs = await this.service.getMyAttestations();
     //console.log({attestations})
     for (const a of attestationsOutputs) {
-      this.attestationsStore.update(attestations => {
+      this.myAttestationsStore.update(attestations => {
         attestations[a.hash] = a
         return attestations
       })
     }
-    return get(this.attestationsStore)
+    return get(this.myAttestationsStore)
   }
 
   async addAttestation(attestation: Attestation) : Promise<EntryHashB64> {
@@ -78,11 +78,11 @@ export class AttestationsStore {
       about: attestation.about,
     };
     const attestationEh: EntryHashB64 = await this.service.createAttestation(s)
-    await this.pullAttestations()
+    await this.pullMyAttestations()
     return attestationEh
   }
 
   attestation(attestationEh: EntryHashB64): AttestationOutput {
-    return get(this.attestationsStore)[attestationEh];
+    return get(this.myAttestationsStore)[attestationEh];
   }
 }

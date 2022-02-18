@@ -46,7 +46,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
   _profiles!: ProfilesStore;
 
   _myProfile = new StoreSubscriber(this, () => this._profiles.myProfile);
-  _attestations = new StoreSubscriber(this, () => this._store.attestations);
+  _myAttestations = new StoreSubscriber(this, () => this._store.myAttestations);
 
   /** Private properties */
 
@@ -124,13 +124,13 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
       return;
     }
     this.initializing = true  // because checkInit gets call whenever profiles changes...
-    let attestations = await this._store.pullAttestations();
+    let attestations = await this._store.pullMyAttestations();
 
     /** load up a attestation if there are none */
     if (Object.keys(attestations).length == 0) {
       console.log("no attestations found, initializing")
       await this.addHardcodedAttestations();
-      attestations = await this._store.pullAttestations();
+      attestations = await this._store.pullMyAttestations();
     }
     if (Object.keys(attestations).length == 0) {
       console.error("No attestations found")
@@ -162,14 +162,14 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
  
     /** Attestations */
     await this._store.addAttestation({
-      content: "Funky",
+      content: "I exist!",
       about: this._store.myAgentPubKey,
     });
   }
 
   async refresh() {
     console.log("refresh: Pulling data from DHT")
-    await this._store.pullAttestations();
+    await this._store.pullMyAttestations();
     await this._profiles.fetchAllProfiles()
   }
 
@@ -222,12 +222,12 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     }
 
     /** Build attestation list */
-    const attestations = Object.entries(this._attestations.value).map(
+    const attestations = Object.entries(this._myAttestations.value).map(
       ([key, attestationObject]) => {
         const attestation = attestationObject.content
         return html`
           <mwc-list-item class="attestation-li" .selected=${key == this._currentAttestationEh} value="${key}">
-            <span>${attestation.content}</span>
+          <attestations-attestation id="attestations-attestation" .currentAttestationEh=${attestationObject.hash} .display=${"compact"}></attestations-attestation>
           </mwc-list-item>
           `
       }
@@ -260,7 +260,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     <!-- TOP APP BAR -->
     <mwc-top-app-bar id="app-bar" dense style="position: relative;">
       <mwc-icon-button icon="menu" slot="navigationIcon"></mwc-icon-button>
-      <div slot="title">Attestations - ${this._attestations.value[this._currentAttestationEh].content.content}</div>
+      <div slot="title">Attestations - ${this._myAttestations.value[this._currentAttestationEh].content.content}</div>
       <mwc-icon-button slot="actionItems" icon="autorenew" @click=${() => this.refresh()} ></mwc-icon-button>
       <mwc-icon-button id="menu-button" slot="actionItems" icon="more_vert" @click=${() => this.openTopMenu()}></mwc-icon-button>
       <mwc-menu id="top-menu" @click=${this.handleMenuSelect}>

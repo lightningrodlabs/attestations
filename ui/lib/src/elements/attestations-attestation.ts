@@ -21,6 +21,7 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
   }
 
   @property() currentAttestationEh = "";
+  @property() display = "full";
 
   @contextProvided({ context: attestationsContext })
   _store!: AttestationsStore;
@@ -29,7 +30,7 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
   _profiles!: ProfilesStore;
 
   _myProfile = new StoreSubscriber(this, () => this._profiles.myProfile);
-  _attestations = new StoreSubscriber(this, () => this._store.attestations);
+  _myAttestations = new StoreSubscriber(this, () => this._store.myAttestations);
   private _knownProfiles = new StoreSubscriber(this, () => this._profiles.knownProfiles);
 
   get myNickName(): string {
@@ -41,7 +42,7 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
       return;
     }
     /** Get current attestation and zoom level */
-    const attestationOutput: AttestationOutput = this._attestations.value[this.currentAttestationEh];
+    const attestationOutput: AttestationOutput = this._myAttestations.value[this.currentAttestationEh];
     const attestation = attestationOutput.content
     /** Render layout */
 
@@ -51,13 +52,19 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
           <sl-avatar .image=${profile.fields.avatar}></sl-avatar>
           <div>${profile.nickname}</div>
         </li>` :""
-
-    return html`
-      <div class="row">
-      <div>Attesting: ${attestation.content}</div> 
-      <div class="about">About: ${folk}</div>
-      </div>
-    `;
+    switch (this.display) {
+      case "compact":
+        return html`${attestation.content} <sl-avatar .image=${profile.fields.avatar}></sl-avatar>`
+        break;
+      case "full":
+      default:
+        return html`
+        <div class="row">
+        <div>Attesting: ${attestation.content}</div> 
+        <div class="about">About: ${attestation.about} ${folk} </div>
+        </div>
+      `;          
+    }
   }
 
 
