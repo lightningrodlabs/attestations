@@ -31,11 +31,10 @@ export default async (orchestrator) => {
     const boboAgentKey = serializeHash(bobbo_attestations.cellId[1]);
     const aliceAgentKey = serializeHash(alice_attestations.cellId[1]);
 
-    // Create a attestation
+    // Create an attestation
     let attestation1 = {
-      name: "Bobbo is cool!",
+      content: "Bobbo is cool!",
       about: boboAgentKey,
-      meta: {},
     };
 
     a_and_b_conductor.setSignalHandler((signal) => {
@@ -61,25 +60,56 @@ export default async (orchestrator) => {
     );
     console.log(attestations);
     t.deepEqual(attestations, [
-      { hash: attestation1_hash, content: attestation1 },
+      { hash: attestation1_hash, content: attestation1, attesters: [aliceAgentKey] },
     ]);
 
     attestations = await alice_attestations.call(
       "hc_zome_attestations",
       "get_attestations",
-      boboAgentKey
+      {agent: boboAgentKey}
     );
     console.log(attestations);
     t.deepEqual(attestations, [
-      { hash: attestation1_hash, content: attestation1 },
+      { hash: attestation1_hash, content: attestation1, attesters: [aliceAgentKey] },
     ]);
 
     attestations = await alice_attestations.call(
       "hc_zome_attestations",
       "get_attestations",
-      aliceAgentKey
+      {content: "Bobbo is cool!"}
     );
-    console.log(attestations);
+    console.log("Should be bobbo", attestations);
+    t.deepEqual(attestations, [
+      { hash: attestation1_hash, content: attestation1, attesters: [aliceAgentKey] },
+    ]);
+
+    attestations = await alice_attestations.call(
+      "hc_zome_attestations",
+      "get_attestations",
+      {agent: aliceAgentKey}
+    );
+    console.log("Should be nothing", attestations);
     t.deepEqual(attestations, []);
+
+    const attestation2_hash = await bobbo_attestations.call(
+      "hc_zome_attestations",
+      "create_attestation",
+      attestation1
+    );
+    t.ok(attestation1_hash);
+    t.equal(attestation2_hash, attestation1_hash)
+    attestations = await bobbo_attestations.call(
+      "hc_zome_attestations",
+      "get_my_attestations",
+    );
+    t.equal(attestations[0].attesters.length, 2);
+
+    attestations = await alice_attestations.call(
+      "hc_zome_attestations",
+      "get_my_attestations",
+    );
+    t.equal(attestations[0].attesters.length, 2);
+
   });
+
 };

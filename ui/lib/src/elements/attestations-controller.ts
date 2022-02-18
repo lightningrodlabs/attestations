@@ -6,7 +6,7 @@ import { StoreSubscriber } from "lit-svelte-stores";
 import { Unsubscriber } from "svelte/store";
 
 import { sharedStyles } from "../sharedStyles";
-import {attestationsContext, Attestation, Dictionary, Signal} from "../types";
+import {attestationsContext, Attestation, AttestationOutput, Dictionary, Signal} from "../types";
 import { AttestationsStore } from "../attestations.store";
 import { AttestationsAttestation } from "./attestations-attestation";
 import { AttestationsAttestationDialog } from "./attestations-attestation-dialog";
@@ -105,7 +105,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     this.subscribeProfile()
   }
  
-  private _getFirst(attestations: Dictionary<Attestation>): EntryHashB64 {
+  private _getFirst(attestations: Dictionary<AttestationOutput>): EntryHashB64 {
     if (Object.keys(attestations).length == 0) {
       return "";
     }
@@ -164,9 +164,6 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     await this._store.addAttestation({
       content: "Funky",
       about: this._store.myAgentPubKey,
-      meta: {
-        foo: `bar`,
-      },
     });
   }
 
@@ -226,7 +223,8 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
 
     /** Build attestation list */
     const attestations = Object.entries(this._attestations.value).map(
-      ([key, attestation]) => {
+      ([key, attestationObject]) => {
+        const attestation = attestationObject.content
         return html`
           <mwc-list-item class="attestation-li" .selected=${key == this._currentAttestationEh} value="${key}">
             <span>${attestation.content}</span>
@@ -262,7 +260,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     <!-- TOP APP BAR -->
     <mwc-top-app-bar id="app-bar" dense style="position: relative;">
       <mwc-icon-button icon="menu" slot="navigationIcon"></mwc-icon-button>
-      <div slot="title">Attestations - ${this._attestations.value[this._currentAttestationEh].content}</div>
+      <div slot="title">Attestations - ${this._attestations.value[this._currentAttestationEh].content.content}</div>
       <mwc-icon-button slot="actionItems" icon="autorenew" @click=${() => this.refresh()} ></mwc-icon-button>
       <mwc-icon-button id="menu-button" slot="actionItems" icon="more_vert" @click=${() => this.openTopMenu()}></mwc-icon-button>
       <mwc-menu id="top-menu" @click=${this.handleMenuSelect}>

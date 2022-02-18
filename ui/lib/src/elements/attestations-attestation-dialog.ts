@@ -58,9 +58,6 @@ export class AttestationsAttestationDialog extends ScopedElementsMixin(LitElemen
     const attestation: Attestation = {
       content: this._contentField.value,
       about: this._about,
-      meta: {
-        foo: "bar",
-      },
     };
 
     // - Add attestation to commons
@@ -79,8 +76,9 @@ export class AttestationsAttestationDialog extends ScopedElementsMixin(LitElemen
 
   private async handleDialogOpened(e: any) {
     if (this._attestationToPreload) {
-      const attestation = this._store.attestation(this._attestationToPreload);
-      if (attestation) {
+      const attestationOutput = this._store.attestation(this._attestationToPreload);
+      if (attestationOutput) {
+        const attestation = attestationOutput.content
         this._contentField.value = attestation.content;
       }
       this._attestationToPreload = undefined;

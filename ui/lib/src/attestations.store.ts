@@ -6,7 +6,7 @@ import { AttestationsService } from './attestations.service';
 import {
   Dictionary,
   Attestation,
-  AttestationEntry,
+  AttestationOutput,
 } from './types';
 import {
   ProfilesStore,
@@ -22,13 +22,13 @@ export class AttestationsStore {
   private profiles: ProfilesStore
 
   /** AttestationEh -> Attestation */
-  private attestationsStore: Writable<Dictionary<Attestation>> = writable({});
+  private attestationsStore: Writable<Dictionary<AttestationOutput>> = writable({});
   
   /** Static info */
   myAgentPubKey: AgentPubKeyB64;
 
   /** Readable stores */
-  public attestations: Readable<Dictionary<Attestation>> = derived(this.attestationsStore, i => i)
+  public attestations: Readable<Dictionary<AttestationOutput>> = derived(this.attestationsStore, i => i)
   
   constructor(
     protected cellClient: CellClient,
@@ -46,10 +46,7 @@ export class AttestationsStore {
       console.log("SIGNAL",signal)
       const payload = signal.data.payload
       switch(payload.message.type) {
-      case "NewAttestation":
-        if (!get(this.attestations)[payload.attestationHash]) {
-          this.updateAttestationFromEntry(payload.attestationHash, payload.message.content)
-        }
+      case "":
         break;
       }
     })
@@ -63,40 +60,29 @@ export class AttestationsStore {
     return this.profiles.fetchAgentProfile(agent)
   }
 
-  private async updateAttestationFromEntry(hash: EntryHashB64, entry: AttestationEntry): Promise<void>   {
-    //console.log("updateAttestationFromEntry: " + hash)
-    const attestation : Attestation = await this.service.attestationFromEntry(hash, entry)
-    this.attestationsStore.update(attestations => {
-      attestations[hash] = attestation
-      return attestations
-    })
-  }
-
-  async pullAttestations() : Promise<Dictionary<Attestation>> {
-    const attestations = await this.service.getMyAttestations();
+  async pullAttestations() : Promise<Dictionary<AttestationOutput>> {
+    const attestationsOutputs = await this.service.getMyAttestations();
     //console.log({attestations})
-    for (const s of attestations) {
-      await this.updateAttestationFromEntry(s.hash, s.content)
+    for (const a of attestationsOutputs) {
+      this.attestationsStore.update(attestations => {
+        attestations[a.hash] = a
+        return attestations
+      })
     }
     return get(this.attestationsStore)
   }
 
   async addAttestation(attestation: Attestation) : Promise<EntryHashB64> {
-    const s: AttestationEntry = {
+    const s: Attestation = {
       content: attestation.content,
       about: attestation.about,
-      meta: attestation.meta,
     };
     const attestationEh: EntryHashB64 = await this.service.createAttestation(s)
-    this.attestationsStore.update(attestations => {
-      attestations[attestationEh] = attestation
-      return attestations
-    })
-    this.service.notify({attestationHash:attestationEh, message: {type:"NewAttestation", content:s}}, this.others());
+    await this.pullAttestations()
     return attestationEh
   }
 
-  attestation(attestationEh: EntryHashB64): Attestation {
+  attestation(attestationEh: EntryHashB64): AttestationOutput {
     return get(this.attestationsStore)[attestationEh];
   }
 }

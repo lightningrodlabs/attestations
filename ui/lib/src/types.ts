@@ -8,17 +8,25 @@ export const attestationsContext : Context<AttestationsStore> = createContext('h
 
 export type Dictionary<T> = { [key: string]: T };
 
+export interface AttestationOutput {
+  hash: EntryHashB64,
+  attesters: Array<AgentPubKeyB64>,
+  content: Attestation,
+}
+
+export interface GetAttestationsInput {
+  content?: string,
+  agent?: AgentPubKeyB64,
+}
 
 export interface AttestationEntry {
   content: string;
   about: AgentPubKeyB64;
-  meta?: Dictionary<string>;
 }
 
 export interface Attestation  {
   content: string;
   about: AgentPubKeyB64;
-  meta?: Dictionary<string>;
 }
 
 

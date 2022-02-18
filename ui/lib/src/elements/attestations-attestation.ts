@@ -5,7 +5,7 @@ import {contextProvided} from "@holochain-open-dev/context";
 import {StoreSubscriber} from "lit-svelte-stores";
 
 import {sharedStyles} from "../sharedStyles";
-import {Attestation, attestationsContext} from "../types";
+import {Attestation, AttestationOutput, attestationsContext} from "../types";
 import {AttestationsStore} from "../attestations.store";
 import {ScopedElementsMixin} from "@open-wc/scoped-elements";
 import {ProfilesStore, profilesStoreContext,} from "@holochain-open-dev/profiles";
@@ -41,7 +41,8 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
       return;
     }
     /** Get current attestation and zoom level */
-    const attestation: Attestation = this._attestations.value[this.currentAttestationEh];
+    const attestationOutput: AttestationOutput = this._attestations.value[this.currentAttestationEh];
+    const attestation = attestationOutput.content
     /** Render layout */
 
     const profile = this._knownProfiles.value[attestation.about]

@@ -1,6 +1,6 @@
 import { CellClient } from '@holochain-open-dev/cell-client';
-import { HoloHashed, serializeHash, EntryHashB64, AgentPubKeyB64 } from '@holochain-open-dev/core-types';
-import {AttestationEntry, Attestation, Signal} from './types';
+import { serializeHash, EntryHashB64, AgentPubKeyB64 } from '@holochain-open-dev/core-types';
+import {AttestationOutput, Attestation, AttestationEntry, Signal, GetAttestationsInput} from './types';
 
 export class AttestationsService {
   constructor(
@@ -12,15 +12,15 @@ export class AttestationsService {
     return serializeHash(this.cellClient.cellId[1]);
   }
 
-  async createAttestation(attestation: AttestationEntry): Promise<EntryHashB64> {
+  async createAttestation(attestation: Attestation): Promise<EntryHashB64> {
     return this.callZome('create_attestation', attestation);
   }
 
-  async getAttestations(agent: AgentPubKeyB64): Promise<Array<HoloHashed<AttestationEntry>>> {
-    return this.callZome('get_attestations', agent);
+  async getAttestations(input: GetAttestationsInput): Promise<Array<AttestationOutput>> {
+    return this.callZome('get_attestations', input);
   }
 
-  async getMyAttestations(): Promise<Array<HoloHashed<AttestationEntry>>> {
+  async getMyAttestations(): Promise<Array<AttestationOutput>> {
     return this.callZome('get_my_attestations', null);
   }
 
@@ -32,7 +32,6 @@ export class AttestationsService {
     return {
       content : entry.content,
       about: entry.about,
-      meta : entry.meta,
     }
   }
 
