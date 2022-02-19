@@ -56,7 +56,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
   _searchField!: TextField;
   @query('#search-button')
   _searchButton!: Button;
-  @query("#attestations-attestation")
+  @query("#y-attestation")
   _attestationElem!: AttestationsAttestation
 
   @query('#my-drawer')
@@ -245,8 +245,8 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
       ([key, attestationOutput]) => {
         const attestation = attestationOutput.content
         return html`
-          <li class="attestation-li" value="${key}">
-          <attestations-attestation id="attestations-attestation" .attestationOutput=${attestationOutput} .display=${display}></attestations-attestation>
+          <li class="attestation-li" value="${key}" @click=${()=>this._currentAttestationOutput=attestationOutput}>
+          <attestations-attestation .attestationOutput=${attestationOutput} .display=${display}></attestations-attestation>
           </li>
           `
       })
@@ -259,7 +259,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
 
     /** Build attestation list */
     const attestations = this.makeMyAttestationList(this._myAttestations.value, "compact") 
-    const searched = this.makeAttestationList(this._searchAttestations.value, "full") 
+    const searched = this.makeAttestationList(this._searchAttestations.value, "compact") 
     
     return html`
 <!--  DRAWER -->
@@ -301,14 +301,14 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
           <mwc-textfield id="search-field" width="200" type="text" label="search" @input=${() => this._searchButton.disabled = !Boolean(this._searchField.value)}></mwc-textfield>    
           <mwc-button id="search-button" icon="search" @click=${async () => this.search()} disabled></mwc-button>
         </div>
-        <div class="search-results">
+        <div id="search-results">
           ${this.noneFound ? "Nothing found" : html`    
           <ul id="searched-attestations-list" >
             ${searched}
           </ul>`}
         </div>
       </div>
-      <attestations-attestation id="attestations-attestation" .attestationOutput=${this._currentAttestationOutput}></attestations-attestation>
+      <attestations-attestation id="x-attestation" .attestationOutput=${this._currentAttestationOutput}></attestations-attestation>
     </div>
 
     <attestations-attestation-dialog id="attestation-dialog"
@@ -382,6 +382,15 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
         .folk > img {
           width: 50px;
           border-radius: 10000px;
+        }
+
+        #search-results ul {
+          list-style:none;
+        }
+
+        #x-attestation {
+          border-radius: 10px;
+          border: black 1px solid;
         }
 
         mwc-textfield.rounded {

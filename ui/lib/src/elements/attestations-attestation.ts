@@ -58,12 +58,15 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
         <div class="row">
         <div class="attesters">
           <h4>Attesters:  ${this.attestationOutput.attesters.length}</h4>
-          <ul>
+          <ul class="row">
             ${this.attestationOutput.attesters.map((context) => {
+              const date = new Date(context.timestamp/1000)
               return html`
-                Who: ${this.folk(context.author)} <copiable-content .content=${attestation.about} ></copiable-content>
-                When: <sl-relative-time .date=${new Date(context.timestamp/1000)}></sl-relative-time>  ${new Date(context.timestamp/1000)}
-                Verifiable: <copiable-content .content=${context.verifiable}></copiable-content>
+                <div> Who: ${this.folk(context.author)} <copiable-content .content=${attestation.about} ></copiable-content></div>
+                <div class="column">
+                <div>When: <sl-relative-time .date=${date}></sl-relative-time></div>
+                <div>Verifiable: <copiable-content .content=${context.verifiable}></copiable-content></div>
+                </div>
               `
             })}
           </ul>
