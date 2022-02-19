@@ -245,9 +245,9 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
       ([key, attestationOutput]) => {
         const attestation = attestationOutput.content
         return html`
-          <li class="attestation-li" value="${key}" @click=${()=>this._currentAttestationOutput=attestationOutput}>
+          <mwc-list-item class="attestation-li" value="${key}" @click=${()=>this._currentAttestationOutput=attestationOutput}>
           <attestations-attestation .attestationOutput=${attestationOutput} .display=${display}></attestations-attestation>
-          </li>
+          </mwc-list-item>
           `
       })
   }
@@ -303,9 +303,9 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
         </div>
         <div id="search-results">
           ${this.noneFound ? "Nothing found" : html`    
-          <ul id="searched-attestations-list" >
+          <mwc-list id="searched-attestations-list" activatable @selected=${()=>{}}>
             ${searched}
-          </ul>`}
+         </mwc-list>`}
         </div>
       </div>
       <attestations-attestation id="x-attestation" .attestationOutput=${this._currentAttestationOutput}></attestations-attestation>

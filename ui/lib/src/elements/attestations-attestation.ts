@@ -58,7 +58,7 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
         <div class="row">
         <div class="attesters">
           <h4>Attesters:  ${this.attestationOutput.attesters.length}</h4>
-          <ul class="row">
+          <ul class="column">
             ${this.attestationOutput.attesters.map((context) => {
               const date = new Date(context.timestamp/1000)
               return html`
