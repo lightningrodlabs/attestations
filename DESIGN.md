@@ -1,6 +1,6 @@
 # Attestations
 
-Verifiable claims in the holochain world...
+Verifiable claims in the holochain world, i.e. "Who said what about/to whom"
 
 ## Context
 
@@ -11,7 +11,7 @@ Verifiable claims in the holochain world...
 When attestations are created they are linked from the creator and from who they are about, as 
 well as being linked from an anchor hash of the content itself.  
 
-This allows attestations to be retreived in those ways.
+This allows attestations to be retreived by content, by attester and by attestee.
 
 ## Entry Types
 
