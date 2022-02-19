@@ -110,7 +110,7 @@ fn get_attestations_inner(base: EntryHash, maybe_tag: Option<LinkTag>) -> Attest
                         AttestationContext {
                             author: h.author().clone().into(),
                             timestamp: h.timestamp(),
-                            verifiable: "".into(), // TODO 
+                            verifiable: "FISH!".into() // TODO 
                         }
                     }).collect(),
                     content: attestation,

@@ -9,6 +9,8 @@ import {Attestation, AttestationOutput, attestationsContext} from "../types";
 import {AttestationsStore} from "../attestations.store";
 import {ScopedElementsMixin} from "@open-wc/scoped-elements";
 import {ProfilesStore, profilesStoreContext, AgentAvatar} from "@holochain-open-dev/profiles";
+import { SlRelativeTime } from "@scoped-elements/shoelace";
+import { CopyableContent } from "./copiable-content";
 //import {Button, Dialog, TextField, Fab, Slider} from "@scoped-elements/material-web";
 
 /**
@@ -19,7 +21,7 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
     super();
   }
 
-  @property() currentAttestationEh = "";
+  @property({type: Object}) attestationOutput!: AttestationOutput;
   @property() display = "full";
 
   @contextProvided({ context: attestationsContext })
@@ -28,13 +30,8 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
   @contextProvided({ context: profilesStoreContext })
   _profiles!: ProfilesStore;
 
-  _myProfile = new StoreSubscriber(this, () => this._profiles.myProfile);
-  _myAttestations = new StoreSubscriber(this, () => this._store.myAttestations);
   private _knownProfiles = new StoreSubscriber(this, () => this._profiles.knownProfiles);
 
-  get myNickName(): string {
-    return this._myProfile.value.nickname;
-  }
   folk(agent: AgentPubKeyB64) {
     const profile = this._knownProfiles.value[agent]
     const folk = profile ? html`
@@ -45,36 +42,34 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
     return folk
   }
   render() {
-    if (!this.currentAttestationEh) {
-      return;
-    }
+    if (!this.attestationOutput) {
+      return html`nothing`
+//      return;
+    } 
     /** Get current attestation and zoom level */
-    const attestationOutput: AttestationOutput = this._myAttestations.value[this.currentAttestationEh];
-    const attestation = attestationOutput.content
+    const attestation = this.attestationOutput.content
     /** Render layout */
-
     switch (this.display) {
       case "compact":
         return html`${attestation.content} <agent-avatar agent-pub-key="${attestation.about}"></agent-avatar>`
         break;
       case "full":
-      default:
         return html`
         <div class="row">
-        <div><h4>Attesting: </h4>${attestation.content}</div> 
-        <div class="about"><h4>About:</h4> ${this.folk(attestation.about)} </div>
         <div class="attesters">
-          <h4>Attesters:</h4>
+          <h4>Attesters:  ${this.attestationOutput.attesters.length}</h4>
           <ul>
-            ${attestationOutput.attesters.map((context) => {
-              html`
-                Who: ${this.folk(context.author)}
-                When: ${context.timestamp}
-                Verifialbe: ${context.verifiable}
+            ${this.attestationOutput.attesters.map((context) => {
+              return html`
+                Who: ${this.folk(context.author)} <copiable-content .content=${attestation.about} ></copiable-content>
+                When: <sl-relative-time .date=${new Date(context.timestamp/1000)}></sl-relative-time>  ${new Date(context.timestamp/1000)}
+                Verifiable: <copiable-content .content=${context.verifiable}></copiable-content>
               `
             })}
           </ul>
         </div>
+        <div><h4>Attesting: </h4>${attestation.content}</div> 
+        <div class="about"><h4>About:</h4> ${this.folk(attestation.about)} <copiable-content .content=${attestation.about} ></copiable-content></div>
         </div>
       `;          
     }
@@ -83,7 +78,9 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
 
   static get scopedElements() {
     return {
-      'agent-avatar': AgentAvatar
+      'agent-avatar': AgentAvatar,
+      'sl-relative-time': SlRelativeTime,
+      'copiable-content': CopyableContent,
     };
   }
   static get styles() {

@@ -1,6 +1,7 @@
 // TODO: add globally available interfaces for your elements
 
-import { EntryHashB64, AgentPubKeyB64, Timestamp } from "@holochain-open-dev/core-types";
+import { EntryHashB64, AgentPubKeyB64 } from "@holochain-open-dev/core-types";
+import { Timestamp } from "@holochain/client";
 import { createContext, Context } from "@holochain-open-dev/context";
 import { AttestationsStore } from "./attestations.store";
 
@@ -10,7 +11,7 @@ export type Dictionary<T> = { [key: string]: T };
 
 export interface AttestationContext {
   author: AgentPubKeyB64,
-  timestamp: Timestamp,
+  timestamp: number,
   verifiable: string,
 }
 

@@ -56,12 +56,14 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
   _searchField!: TextField;
   @query('#search-button')
   _searchButton!: Button;
+  @query("#attestations-attestation")
+  _attestationElem!: AttestationsAttestation
 
   @query('#my-drawer')
   private _drawer!: Drawer;
 
   @state() _currentAttestationEh = "";
-  @state() _currentTemplateEh = "";
+  @state() _currentAttestationOutput! : AttestationOutput;
   @state() noneFound = false;
 
   private initialized = false;
@@ -181,10 +183,6 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     await this._profiles.fetchAllProfiles()
   }
 
-  get attestationElem(): AttestationsAttestation {
-    return this.shadowRoot!.getElementById("attestations-attestation") as AttestationsAttestation;
-  }
-
   async openAttestationDialog(attestation?: any) {
     this.attestationDialogElem.resetAllFields();
     this.attestationDialogElem.open(attestation);
@@ -204,7 +202,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
 
   private async handleAttestationSelect(attestationEh: string): Promise<void> {
     this._currentAttestationEh = attestationEh;
-    this.attestationElem.currentAttestationEh = attestationEh;
+    this._currentAttestationOutput =  this._myAttestations.value[attestationEh];
   }
 
   openTopMenu() {
@@ -231,11 +229,11 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
 
   makeMyAttestationList(entries: Dictionary<AttestationOutput>, display: string) {
     return Object.entries(entries).map(
-      ([key, attestationObject]) => {
-        const attestation = attestationObject.content
+      ([key, attestationOutput]) => {
+        const attestation = attestationOutput.content
         return html`
           <mwc-list-item class="attestation-li" .selected=${key == this._currentAttestationEh} value="${key}">
-          <attestations-attestation id="attestations-attestation" .currentAttestationEh=${attestationObject.hash} .display=${display}></attestations-attestation>
+          <attestations-attestation id="attestations-attestation" .attestationOutput=${attestationOutput} .display=${display}></attestations-attestation>
           </mwc-list-item>
           `
       })
@@ -244,11 +242,11 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
 
   makeAttestationList(entries: Dictionary<AttestationOutput>, display: string) {
     return Object.entries(entries).map(
-      ([key, attestationObject]) => {
-        const attestation = attestationObject.content
+      ([key, attestationOutput]) => {
+        const attestation = attestationOutput.content
         return html`
           <li class="attestation-li" value="${key}">
-          <attestations-attestation id="attestations-attestation" .currentAttestationEh=${attestationObject.hash} .display=${display}></attestations-attestation>
+          <attestations-attestation id="attestations-attestation" .attestationOutput=${attestationOutput} .display=${display}></attestations-attestation>
           </li>
           `
       })
@@ -261,7 +259,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
 
     /** Build attestation list */
     const attestations = this.makeMyAttestationList(this._myAttestations.value, "compact") 
-    const searched = this.makeAttestationList(this._searchAttestations.value, "compact") 
+    const searched = this.makeAttestationList(this._searchAttestations.value, "full") 
     
     return html`
 <!--  DRAWER -->
@@ -289,7 +287,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     <!-- TOP APP BAR -->
     <mwc-top-app-bar id="app-bar" dense style="position: relative;">
       <mwc-icon-button icon="menu" slot="navigationIcon"></mwc-icon-button>
-      <div slot="title">Attestations - ${this._myAttestations.value[this._currentAttestationEh].content.content}</div>
+      <div slot="title">Attestations - ${this._attestationElem ? this._attestationElem.attestationOutput.content.content : "nothing"}</div>
       <mwc-icon-button slot="actionItems" icon="autorenew" @click=${() => this.refresh()} ></mwc-icon-button>
       <mwc-icon-button id="menu-button" slot="actionItems" icon="more_vert" @click=${() => this.openTopMenu()}></mwc-icon-button>
       <mwc-menu id="top-menu" @click=${this.handleMenuSelect}>
@@ -310,7 +308,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
           </ul>`}
         </div>
       </div>
-      <attestations-attestation id="attestations-attestation" .currentAttestationEh=${this._currentAttestationEh}></attestations-attestation>
+      <attestations-attestation id="attestations-attestation" .attestationOutput=${this._currentAttestationOutput}></attestations-attestation>
     </div>
 
     <attestations-attestation-dialog id="attestation-dialog"
