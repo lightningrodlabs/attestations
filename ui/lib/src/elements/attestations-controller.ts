@@ -226,9 +226,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
   async search() {
     const result = await this._store.searchAttestations(this._searchField.value)
     console.log("FISH",Object.keys(result).length)
-    if (Object.keys(result).length == 0) {
-      this.noneFound = true
-    }
+    this.noneFound = Object.keys(result).length == 0
   }
 
   makeMyAttestationList(entries: Dictionary<AttestationOutput>, display: string) {
@@ -299,15 +297,19 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
       </mwc-menu>
     </mwc-top-app-bar>
 
-    <div class="appBody">
-      <mwc-textfield id="search-field" type="text" label="search" @input=${() => this._searchButton.disabled = !Boolean(this._searchField.value)}></mwc-textfield>    
-      <mwc-button id="search-button" icon="search" @click=${async () => this.search()} disabled></mwc-button>
-  <!-- Attestation List -->
-    ${this.noneFound ? "Nothing found" : html`    
-    <ul id="searched-attestations-list" >
-      ${searched}
-    </ul>`}
-
+    <div class="appBody row">
+      <div id="search-area" class="column">
+        <div class="search-controls">
+          <mwc-textfield id="search-field" width="200" type="text" label="search" @input=${() => this._searchButton.disabled = !Boolean(this._searchField.value)}></mwc-textfield>    
+          <mwc-button id="search-button" icon="search" @click=${async () => this.search()} disabled></mwc-button>
+        </div>
+        <div class="search-results">
+          ${this.noneFound ? "Nothing found" : html`    
+          <ul id="searched-attestations-list" >
+            ${searched}
+          </ul>`}
+        </div>
+      </div>
       <attestations-attestation id="attestations-attestation" .currentAttestationEh=${this._currentAttestationEh}></attestations-attestation>
     </div>
 

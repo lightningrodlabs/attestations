@@ -3,7 +3,7 @@ import {property, query} from "lit/decorators.js";
 
 import {contextProvided} from "@holochain-open-dev/context";
 import {StoreSubscriber} from "lit-svelte-stores";
-
+import {AgentPubKeyB64} from "@holochain-open-dev/core-types";
 import {sharedStyles} from "../sharedStyles";
 import {Attestation, AttestationOutput, attestationsContext} from "../types";
 import {AttestationsStore} from "../attestations.store";
@@ -35,7 +35,15 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
   get myNickName(): string {
     return this._myProfile.value.nickname;
   }
-
+  folk(agent: AgentPubKeyB64) {
+    const profile = this._knownProfiles.value[agent]
+    const folk = profile ? html`
+      <li class="folk">
+          <agent-avatar agent-pub-key="${agent}"></agent-avatar>
+          <div>${profile.nickname}</div>
+        </li>` :html`<agent-avatar agent-pub-key="${agent}"></agent-avatar>`
+    return folk
+  }
   render() {
     if (!this.currentAttestationEh) {
       return;
@@ -45,12 +53,6 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
     const attestation = attestationOutput.content
     /** Render layout */
 
-    const profile = this._knownProfiles.value[attestation.about]
-    const folk = profile ? html`
-    <li class="folk">
-          <agent-avatar agent-pub-key="${attestation.about}"></agent-avatar>
-          <div>${profile.nickname}</div>
-        </li>` :""
     switch (this.display) {
       case "compact":
         return html`${attestation.content} <agent-avatar agent-pub-key="${attestation.about}"></agent-avatar>`
@@ -59,8 +61,20 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
       default:
         return html`
         <div class="row">
-        <div>Attesting: ${attestation.content}</div> 
-        <div class="about">About: ${attestation.about} ${folk} </div>
+        <div><h4>Attesting: </h4>${attestation.content}</div> 
+        <div class="about"><h4>About:</h4> ${this.folk(attestation.about)} </div>
+        <div class="attesters">
+          <h4>Attesters:</h4>
+          <ul>
+            ${attestationOutput.attesters.map((context) => {
+              html`
+                Who: ${this.folk(context.author)}
+                When: ${context.timestamp}
+                Verifialbe: ${context.verifiable}
+              `
+            })}
+          </ul>
+        </div>
         </div>
       `;          
     }

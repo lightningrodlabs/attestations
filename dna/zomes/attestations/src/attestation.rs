@@ -11,11 +11,17 @@ pub struct Attestation {
     pub content: String,
     pub about: AgentPubKeyB64,
 }
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct AttestationContext {
+    author: AgentPubKeyB64,
+    timestamp: Timestamp,
+    verifiable: String,
+}
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct AttestationOutput {
     hash: EntryHashB64,
-    attesters: Vec<AgentPubKeyB64>,
+    attesters: Vec<AttestationContext>,
     content: Attestation,
 }
 
@@ -99,7 +105,14 @@ fn get_attestations_inner(base: EntryHash, maybe_tag: Option<LinkTag>) -> Attest
                 let hash = hash_entry(&attestation).ok()?;
                 Some(AttestationOutput {
                     hash: hash.into(),
-                    attesters: headers.into_iter().map(|header| header.header().author().clone().into()).collect(),
+                    attesters: headers.into_iter().map(|header| {
+                        let h = header.header();
+                        AttestationContext {
+                            author: h.author().clone().into(),
+                            timestamp: h.timestamp(),
+                            verifiable: "".into(), // TODO 
+                        }
+                    }).collect(),
                     content: attestation,
                 })
             }

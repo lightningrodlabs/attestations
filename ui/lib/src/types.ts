@@ -1,6 +1,6 @@
 // TODO: add globally available interfaces for your elements
 
-import { EntryHashB64, AgentPubKeyB64 } from "@holochain-open-dev/core-types";
+import { EntryHashB64, AgentPubKeyB64, Timestamp } from "@holochain-open-dev/core-types";
 import { createContext, Context } from "@holochain-open-dev/context";
 import { AttestationsStore } from "./attestations.store";
 
@@ -8,9 +8,15 @@ export const attestationsContext : Context<AttestationsStore> = createContext('h
 
 export type Dictionary<T> = { [key: string]: T };
 
+export interface AttestationContext {
+  author: AgentPubKeyB64,
+  timestamp: Timestamp,
+  verifiable: string,
+}
+
 export interface AttestationOutput {
   hash: EntryHashB64,
-  attesters: Array<AgentPubKeyB64>,
+  attesters: Array<AttestationContext>,
   content: Attestation,
 }
 
