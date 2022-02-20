@@ -43,7 +43,7 @@ export class VerifyAttestation extends ScopedElementsMixin(LitElement) {
         autoValidate="true"
         @input=${this.check}
         id="verifiable-field"
-        cols="73"
+        cols="40"
         rows="10"
         label="Verifiable"
         required
@@ -52,7 +52,7 @@ export class VerifyAttestation extends ScopedElementsMixin(LitElement) {
         ? html` <h2>VERFIED:</h2>
             Content: ${this._attestation.content} About:
             ${this._attestation.about}`
-        : "<h2>UNVERIFIED</h2>"}
+        : html`<h2>UNVERIFIED</h2>`}
     `;
   }
   static get scopedElements() {
