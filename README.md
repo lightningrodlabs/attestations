@@ -26,13 +26,17 @@ entries can be shared and thus that claim by be confirmed by anyone as having be
 
 #### Membrane Crossing
 - **Holochain Membrane Proofs**: Holochain hApps can take membrane proofs that check ability of an agent to join a hApp. Attestations can be easily used as such proofs (see elemental-chat)
-- **DAO Discord access**: A common use case for NFTs is web3 happs, is to use them to verify that a given person can, for example take part 
-in a given Discord channel.  One can do the same with an instince of this holochain hApp, where a given agent makes
+- **DAO Discord access**: A common use case for NFTs in web3 happs, is to use them to verify that a given person can, for example take part 
+in a given Discord channel.  One can do the same with an instance of this holochain hApp, where a given agent makes
 attestations of other agents permissions, which are read by a discord server bot to allow access.
 
-#### Badges/Certificates
+#### Transferable NFTs
 
-#### [More]
+Minting an NFT is the same as making an attestation about yourself as being the owner of a given digital asset.  The asset could litterally be included in the content of the attestation.  Transfering the NFT is just making an attestation that you have done so with the about being who you are transferring it to, and including the hash of the original attestation entry in content.  Subsequent transfers simply include the hash of the previous attestation, thus creating a chain of custody.
+
+#### Reviews/Ratings/Badges/Certificates
+
+These are kind of obvious as they are all clearly just attestations by some authority about a agent.
 
 ## Design
 
