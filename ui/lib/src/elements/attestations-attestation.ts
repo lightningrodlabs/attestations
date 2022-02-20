@@ -11,6 +11,7 @@ import {ScopedElementsMixin} from "@open-wc/scoped-elements";
 import {ProfilesStore, profilesStoreContext, AgentAvatar} from "@holochain-open-dev/profiles";
 import { SlRelativeTime } from "@scoped-elements/shoelace";
 import { CopyableContent } from "./copiable-content";
+import {encode} from "@msgpack/msgpack"
 //import {Button, Dialog, TextField, Fab, Slider} from "@scoped-elements/material-web";
 
 /**
@@ -65,7 +66,7 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
                 <div> Who: ${this.folk(context.author)} <copiable-content .content=${attestation.about} ></copiable-content></div>
                 <div class="column">
                 <div>When: <sl-relative-time .date=${date}></sl-relative-time></div>
-                <div>Verifiable: <copiable-content .content=${context.verifiable}></copiable-content></div>
+                <div>Verifiable: <copiable-content .content=${encode(this.attestationOutput.verifiable)}></copiable-content></div>
                 </div>
               `
             })}

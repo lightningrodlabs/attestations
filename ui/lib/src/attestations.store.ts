@@ -8,6 +8,7 @@ import {
   Attestation,
   AttestationOutput,
   GetAttestationsInput,
+  Verifiable,
 } from './types';
 import {
   ProfilesStore,
@@ -108,5 +109,9 @@ export class AttestationsStore {
 
   attestation(attestationEh: EntryHashB64): AttestationOutput {
     return get(this.myAttestationsStore)[attestationEh];
+  }
+
+  verify(input: Verifiable) : Promise<boolean> {
+    return this.service.verify(input)
   }
 }

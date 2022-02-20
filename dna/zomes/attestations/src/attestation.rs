@@ -5,6 +5,14 @@ use crate::error::*;
 //use crate::signals::*;
 
 /// Attestation entry definition
+#[derive(Clone, Serialize, Deserialize, Debug)]
+#[serde(rename_all="camelCase")]
+pub struct Verifiable {
+    pub attestation: Attestation,
+    signed_headers: Vec<SignedHeaderHashed>,
+}
+
+/// Attestation entry definition
 #[hdk_entry(id = "attestation")]
 #[derive(Clone)]
 pub struct Attestation {
@@ -15,14 +23,15 @@ pub struct Attestation {
 pub struct AttestationContext {
     author: AgentPubKeyB64,
     timestamp: Timestamp,
-    verifiable: String,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
+#[serde(rename_all="camelCase")]
 pub struct AttestationOutput {
     hash: EntryHashB64,
     attesters: Vec<AttestationContext>,
     content: Attestation,
+    verifiable: Verifiable,
 }
 
 fn get_my_attestations_base() -> ExternResult<EntryHash> {
@@ -101,18 +110,21 @@ fn get_attestations_inner(base: EntryHash, maybe_tag: Option<LinkTag>) -> Attest
         .filter_map(|me| me)
         .filter_map(|details| match details {
             Details::Entry(EntryDetails { entry, headers, .. }) => {
-                let attestation = entry.try_into().ok()?;
+                let attestation: Attestation = entry.try_into().ok()?;
                 let hash = hash_entry(&attestation).ok()?;
                 Some(AttestationOutput {
                     hash: hash.into(),
-                    attesters: headers.into_iter().map(|header| {
+                    attesters: headers.clone().into_iter().map(|header| {
                         let h = header.header();
                         AttestationContext {
                             author: h.author().clone().into(),
                             timestamp: h.timestamp(),
-                            verifiable: "FISH!".into() // TODO 
                         }
                     }).collect(),
+                    verifiable: Verifiable {
+                        signed_headers: headers,
+                        attestation: attestation.clone(),
+                    },
                     content: attestation,
                 })
             }
@@ -120,4 +132,32 @@ fn get_attestations_inner(base: EntryHash, maybe_tag: Option<LinkTag>) -> Attest
         })
         .collect();
     Ok(attestations)
+}
+
+///
+#[hdk_extern]
+fn verify(input: Verifiable) -> ExternResult<()>  {
+    let failed = WasmError::Guest("Bad entry hash".into());
+    let hash = hash_entry(input.attestation)?;
+    for signed_header in input.signed_headers {
+        if *signed_header.header().entry_hash().ok_or(failed.clone())? != hash {
+            return Err(failed);
+        }
+        let signature = signed_header.signature().clone();
+        match verify_signature(signed_header.header().author().clone(), signature, signed_header.header()) {
+            Ok(verified) => {
+                if verified {
+                    debug!("verified");
+                } else {
+                    trace!("Joining code validation failed: incorrect signature");
+                    return Err(failed)
+                }
+            }
+            Err(e) => {
+                debug!("Error on get when verifying signature of agent entry: {:?}",e);
+                return Err(failed);
+            }
+        }
+    }
+    Ok(())
 }

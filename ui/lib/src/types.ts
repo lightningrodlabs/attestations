@@ -4,20 +4,28 @@ import { EntryHashB64, AgentPubKeyB64 } from "@holochain-open-dev/core-types";
 import { Timestamp } from "@holochain/client";
 import { createContext, Context } from "@holochain-open-dev/context";
 import { AttestationsStore } from "./attestations.store";
+import {SignedHeaderHashed } from "@holochain/client"
 
 export const attestationsContext : Context<AttestationsStore> = createContext('hc_zome_attestations/service');
 
 export type Dictionary<T> = { [key: string]: T };
 
+
+
+export interface Verifiable {
+  attestation: Attestation,
+  signed_headers: Array<SignedHeaderHashed>,
+}
+
 export interface AttestationContext {
   author: AgentPubKeyB64,
   timestamp: number,
-  verifiable: string,
 }
 
 export interface AttestationOutput {
   hash: EntryHashB64,
   attesters: Array<AttestationContext>,
+  verifiable: Verifiable,
   content: Attestation,
 }
 

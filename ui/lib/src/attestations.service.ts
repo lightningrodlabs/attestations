@@ -1,6 +1,6 @@
 import { CellClient } from '@holochain-open-dev/cell-client';
 import { serializeHash, EntryHashB64, AgentPubKeyB64 } from '@holochain-open-dev/core-types';
-import {AttestationOutput, Attestation, AttestationEntry, Signal, GetAttestationsInput} from './types';
+import {AttestationOutput, Attestation, AttestationEntry, Signal, GetAttestationsInput, Verifiable} from './types';
 
 export class AttestationsService {
   constructor(
@@ -32,6 +32,17 @@ export class AttestationsService {
     return {
       content : entry.content,
       about: entry.about,
+    }
+  }
+
+  async verify(input: Verifiable): Promise<boolean> {
+    try {
+      await this.callZome('verify', input);
+      return true
+    }
+    catch(e) {
+      console.log("Error during verify:", e)
+      return false
     }
   }
 

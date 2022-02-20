@@ -24,6 +24,7 @@ import {
   AgentAvatar
 } from "@holochain-open-dev/profiles";
 import {EntryHashB64} from "@holochain-open-dev/core-types";
+import { VerifyAttestation } from "./verify-attestation";
 
 /**
  * @element attestations-controller
@@ -309,6 +310,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
         </div>
       </div>
       <attestations-attestation id="x-attestation" .attestationOutput=${this._currentAttestationOutput}></attestations-attestation>
+      <verify-attestation> </verify-attestation>
     </div>
 
     <attestations-attestation-dialog id="attestation-dialog"
@@ -338,6 +340,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
       "attestations-attestation": AttestationsAttestation,
       "mwc-formfield": Formfield,
       'agent-avatar': AgentAvatar,
+      'verify-attestation': VerifyAttestation
     };
   }
 
