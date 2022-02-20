@@ -10,11 +10,9 @@ export const attestationsContext : Context<AttestationsStore> = createContext('h
 
 export type Dictionary<T> = { [key: string]: T };
 
-
-
 export interface Verifiable {
-  attestation: Attestation,
-  signed_headers: Array<SignedHeaderHashed>,
+  attestation?: Attestation,
+  signedHeaders: Array<SignedHeaderHashed>,
 }
 
 export interface AttestationContext {

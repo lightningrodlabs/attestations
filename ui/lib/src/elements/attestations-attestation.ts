@@ -5,7 +5,7 @@ import {contextProvided} from "@holochain-open-dev/context";
 import {StoreSubscriber} from "lit-svelte-stores";
 import {AgentPubKeyB64} from "@holochain-open-dev/core-types";
 import {sharedStyles} from "../sharedStyles";
-import {Attestation, AttestationOutput, attestationsContext} from "../types";
+import {Attestation, AttestationOutput, attestationsContext, Verifiable} from "../types";
 import {AttestationsStore} from "../attestations.store";
 import {ScopedElementsMixin} from "@open-wc/scoped-elements";
 import {ProfilesStore, profilesStoreContext, AgentAvatar} from "@holochain-open-dev/profiles";
@@ -66,7 +66,10 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
                 <div> Who: ${this.folk(context.author)} <copiable-content .content=${attestation.about} ></copiable-content></div>
                 <div class="column">
                 <div>When: <sl-relative-time .date=${date}></sl-relative-time></div>
-                <div>Verifiable: <copiable-content .content=${encode(this.attestationOutput.verifiable)}></copiable-content></div>
+                <div>Bare Verifiable: <copiable-content .content=${encode(this.attestationOutput.verifiable)}></copiable-content></div>
+                <div>Full Verifiable: <copiable-content .content=${
+                encode({
+                  signedHeaders: this.attestationOutput.verifiable.signedHeaders, attestation: this.attestationOutput.content})}></copiable-content></div>
                 </div>
               `
             })}

@@ -17,6 +17,10 @@ export class VerifyAttestation extends ScopedElementsMixin(LitElement) {
 
   @state()
   _attestation: Attestation | undefined;
+  @state()
+  _verified: boolean = false
+  @state()
+  _verificationError: string = ""
 
   @contextProvided({ context: attestationsContext })
   _store!: AttestationsStore;
@@ -25,17 +29,21 @@ export class VerifyAttestation extends ScopedElementsMixin(LitElement) {
     return sharedStyles;
   }
   async check() {
+    this._verificationError = ""
     try {
       const verifiable: Verifiable = decode(
         Base64.toUint8Array(this._verifiable.value)
       ) as Verifiable;
-      const verified = await this._store.verify(verifiable);
-      if (verified) {
+      if (verifiable.attestation) {
         this._attestation = verifiable.attestation;
-        return;
+      } else {
+        this._attestation = undefined;
       }
-    } catch (e) {}
-    this._attestation = undefined;
+      this._verified = await this._store.verify(verifiable);
+    } catch (e) {
+        this._verified = false
+        this._verificationError = JSON.stringify(e)
+    }
   }
   render() {
     return html`
@@ -48,11 +56,12 @@ export class VerifyAttestation extends ScopedElementsMixin(LitElement) {
         label="Verifiable"
         required
       ></mwc-textarea>
+      ${this._verifiable && this._verifiable.value != "" ? (this._verified ? html`<h2>Verified</h2>` : html`<h2>Verification Failed!</h2>`) : ""}
       ${this._attestation
-        ? html` <h2>VERFIED:</h2>
-            Content: ${this._attestation.content} About:
-            ${this._attestation.about}`
-        : html`<h2>UNVERIFIED</h2>`}
+        ? html`
+            Content: ${this._attestation.content} 
+            About: ${this._attestation.about}`
+        : ""}
     `;
   }
   static get scopedElements() {

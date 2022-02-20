@@ -52,3 +52,4 @@ fn notify(input: NotifyInput) -> ExternResult<()> {
     remote_signal(ExternIO::encode(input.signal)?,folks)?;
     Ok(())
 }
+

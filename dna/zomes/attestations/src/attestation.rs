@@ -8,7 +8,7 @@ use crate::error::*;
 #[derive(Clone, Serialize, Deserialize, Debug)]
 #[serde(rename_all="camelCase")]
 pub struct Verifiable {
-    pub attestation: Attestation,
+    pub attestation: Option<Attestation>,
     signed_headers: Vec<SignedHeaderHashed>,
 }
 
@@ -123,7 +123,7 @@ fn get_attestations_inner(base: EntryHash, maybe_tag: Option<LinkTag>) -> Attest
                     }).collect(),
                     verifiable: Verifiable {
                         signed_headers: headers,
-                        attestation: attestation.clone(),
+                        attestation: None,
                     },
                     content: attestation,
                 })
@@ -137,25 +137,23 @@ fn get_attestations_inner(base: EntryHash, maybe_tag: Option<LinkTag>) -> Attest
 ///
 #[hdk_extern]
 fn verify(input: Verifiable) -> ExternResult<()>  {
-    let failed = WasmError::Guest("Bad entry hash".into());
-    let hash = hash_entry(input.attestation)?;
     for signed_header in input.signed_headers {
-        if *signed_header.header().entry_hash().ok_or(failed.clone())? != hash {
-            return Err(failed);
+        if let Some(ref attestation) = input.attestation {
+            let hash = hash_entry(attestation)?;
+            if *signed_header.header().entry_hash().ok_or(WasmError::Guest("Failed verification: couldn't get hash from header".into()))? != hash {
+                return Err(WasmError::Guest("Failed verification: attestation hash doesn't match".into()));
+            }
         }
         let signature = signed_header.signature().clone();
         match verify_signature(signed_header.header().author().clone(), signature, signed_header.header()) {
             Ok(verified) => {
                 if verified {
-                    debug!("verified");
                 } else {
-                    trace!("Joining code validation failed: incorrect signature");
-                    return Err(failed)
+                    return Err(WasmError::Guest("Failed verification: signature doesn't match.".into()))
                 }
             }
             Err(e) => {
-                debug!("Error on get when verifying signature of agent entry: {:?}",e);
-                return Err(failed);
+                return Err(WasmError::Guest(format!("Failed verification: error checking signature {}", e.to_string())));
             }
         }
     }
