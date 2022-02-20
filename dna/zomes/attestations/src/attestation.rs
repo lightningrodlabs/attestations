@@ -140,7 +140,8 @@ fn verify(input: Verifiable) -> ExternResult<()>  {
     for signed_header in input.signed_headers {
         if let Some(ref attestation) = input.attestation {
             let hash = hash_entry(attestation)?;
-            if *signed_header.header().entry_hash().ok_or(WasmError::Guest("Failed verification: couldn't get hash from header".into()))? != hash {
+            let header_hash = signed_header.header().entry_hash().ok_or(WasmError::Guest("Failed verification: couldn't get hash from header".into()))?;
+            if  *header_hash != hash {
                 return Err(WasmError::Guest("Failed verification: attestation hash doesn't match".into()));
             }
         }

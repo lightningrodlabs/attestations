@@ -18,9 +18,9 @@ export class VerifyAttestation extends ScopedElementsMixin(LitElement) {
   @state()
   _attestation: Attestation | undefined;
   @state()
-  _verified: boolean = false
+  _verified: boolean = false;
   @state()
-  _verificationError: string = ""
+  _verificationError: string = "";
 
   @contextProvided({ context: attestationsContext })
   _store!: AttestationsStore;
@@ -29,7 +29,7 @@ export class VerifyAttestation extends ScopedElementsMixin(LitElement) {
     return sharedStyles;
   }
   async check() {
-    this._verificationError = ""
+    this._verificationError = "";
     try {
       const verifiable: Verifiable = decode(
         Base64.toUint8Array(this._verifiable.value)
@@ -41,11 +41,17 @@ export class VerifyAttestation extends ScopedElementsMixin(LitElement) {
       }
       this._verified = await this._store.verify(verifiable);
     } catch (e) {
-        this._verified = false
-        this._verificationError = JSON.stringify(e)
+      this._verified = false;
+      this._attestation = undefined;
+      this._verificationError = `Bad verifiable format`;
     }
   }
   render() {
+    const attestation = this._attestation
+      ? html` Content: ${this._attestation.content} About:
+        ${this._attestation.about}`
+      : html`(Bare verifiable)`;
+    const err = this._verificationError ? html`<h3 sytle="color:red">${this._verificationError}</h3>`: ""
     return html`
       <mwc-textarea
         autoValidate="true"
@@ -56,12 +62,9 @@ export class VerifyAttestation extends ScopedElementsMixin(LitElement) {
         label="Verifiable"
         required
       ></mwc-textarea>
-      ${this._verifiable && this._verifiable.value != "" ? (this._verified ? html`<h2>Verified</h2>` : html`<h2>Verification Failed!</h2>`) : ""}
-      ${this._attestation
-        ? html`
-            Content: ${this._attestation.content} 
-            About: ${this._attestation.about}`
-        : ""}
+      ${this._verifiable && this._verifiable.value != "" ? 
+         (this._verified ? html`<h2>Verified</h2>${attestation}` : html`<h2>Verification Failed!</h2>${err}`)
+          : ""}
     `;
   }
   static get scopedElements() {
