@@ -1,6 +1,8 @@
 import { Orchestrator, Config, InstallAgentsHapps } from "@holochain/tryorama";
 import path from "path";
 import * as _ from "lodash";
+import {Attestation, AttestationOutput} from "../../ui/lib/src/types"
+
 import {
   RETRY_DELAY,
   RETRY_COUNT,
@@ -14,6 +16,14 @@ import { Base64 } from "js-base64";
 
 function serializeHash(hash: Uint8Array): string {
   return `u${Base64.fromUint8Array(hash, true)}`;
+}
+
+function checkAttestations(t, attestationObject: AttestationOutput, attestation: Attestation, hash: string, attesters: Array<string>) {
+  t.equal(attestationObject.hash, hash)
+  t.deepEqual(attestationObject.content, attestation)
+  attestationObject.attesters.forEach((element,i) => {
+    t.equal(attesters[i], element.author)
+  });
 }
 export default async (orchestrator) => {
   orchestrator.registerScenario("attestations basic tests", async (s, t) => {
@@ -59,9 +69,7 @@ export default async (orchestrator) => {
       null
     );
     console.log(attestations);
-    t.deepEqual(attestations, [
-      { hash: attestation1_hash, content: attestation1, attesters: [aliceAgentKey] },
-    ]);
+    checkAttestations(t,attestations[0], attestation1, attestation1_hash, [aliceAgentKey])
 
     attestations = await alice_attestations.call(
       "hc_zome_attestations",
@@ -69,9 +77,7 @@ export default async (orchestrator) => {
       {agent: boboAgentKey}
     );
     console.log(attestations);
-    t.deepEqual(attestations, [
-      { hash: attestation1_hash, content: attestation1, attesters: [aliceAgentKey] },
-    ]);
+    checkAttestations(t,attestations[0], attestation1, attestation1_hash, [aliceAgentKey])
 
     attestations = await alice_attestations.call(
       "hc_zome_attestations",
@@ -79,9 +85,8 @@ export default async (orchestrator) => {
       {content: "Bobbo is cool!"}
     );
     console.log("Should be bobbo", attestations);
-    t.deepEqual(attestations, [
-      { hash: attestation1_hash, content: attestation1, attesters: [aliceAgentKey] },
-    ]);
+    checkAttestations(t,attestations[0], attestation1, attestation1_hash, [aliceAgentKey])
+
 
     attestations = await alice_attestations.call(
       "hc_zome_attestations",
