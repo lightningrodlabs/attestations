@@ -12,6 +12,7 @@ import {ProfilesStore, profilesStoreContext, AgentAvatar} from "@holochain-open-
 import { SlRelativeTime } from "@scoped-elements/shoelace";
 import { CopyableContent } from "./copiable-content";
 import {encode} from "@msgpack/msgpack"
+import { AttestationFolk } from "./attestation-folk";
 //import {Button, Dialog, TextField, Fab, Slider} from "@scoped-elements/material-web";
 
 /**
@@ -31,16 +32,8 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
   @contextProvided({ context: profilesStoreContext })
   _profiles!: ProfilesStore;
 
-  private _knownProfiles = new StoreSubscriber(this, () => this._profiles.knownProfiles);
-
   folk(agent: AgentPubKeyB64) {
-    const profile = this._knownProfiles.value[agent]
-    const folk = profile ? html`
-      <li class="folk">
-          <agent-avatar agent-pub-key="${agent}"></agent-avatar>
-          <div>${profile.nickname}</div>
-        </li>` :html`<agent-avatar agent-pub-key="${agent}"></agent-avatar>`
-    return folk
+    return html`<attestation-folk .agent=${agent}></attestation-folk>`
   }
   render() {
     if (!this.attestationOutput) {
@@ -51,10 +44,11 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
     /** Render layout */
     switch (this.display) {
       case "compact":
-        return html`${attestation.content} <agent-avatar agent-pub-key="${attestation.about}"></agent-avatar>`
+        return html`${attestation.content} <attestation-folk .agent=${attestation.about} .compact=${true} .showNick=${false} .showCopiable=${false}></attestation-folk></agent-avatar>`
         break;
       case "compact-with-who":
-        const who = this.attestationOutput.attesters.map((a)=> html`<agent-avatar agent-pub-key="${a.author}"></agent-avatar>`)
+        const who = this.attestationOutput.attesters.map((a)=> 
+          html`<attestation-folk .agent=${a.author} .compact=${true} .showNick=${false} .showCopiable=${false}></attestation-folk></agent-avatar>`)
         return html`${who} ${attestation.content} <agent-avatar agent-pub-key="${attestation.about}"></agent-avatar>`
         break;
       case "full":
@@ -62,16 +56,16 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
         <div class="column">
           <div class="row">
         <div><h4>Attesting: </h4>${attestation.content}</div> 
-        <div class="about"><h4>About:</h4> ${this.folk(attestation.about)} <copiable-content .content=${attestation.about} ></copiable-content></div>
+        <div class="about"><h4>About:</h4> <attestation-folk .agent=${attestation.about}></attestation-folk></div>
     </div>
         <div class="attesters">
           <h4>Attesters:  ${this.attestationOutput.attesters.length}</h4>
           <ul class="column">
-            ${this.attestationOutput.attesters.map((context) => {
-              const date = new Date(context.timestamp/1000)
+            ${this.attestationOutput.attesters.map((attester) => {
+              const date = new Date(attester.timestamp/1000)
               return html`
                 <div class="row">
-                <div> Who: ${this.folk(context.author)} <copiable-content .content=${attestation.about} ></copiable-content></div>
+                <div> Who: <attestation-folk .agent=${attester.author}></attestation-folk></div>
                 <div>When: <sl-relative-time .date=${date}></sl-relative-time></div>
                 <div>Bare Verifiable: <copiable-content .content=${encode(this.attestationOutput.verifiable)}></copiable-content></div>
                 <div>Full Verifiable: <copiable-content .content=${
@@ -93,16 +87,13 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
       'agent-avatar': AgentAvatar,
       'sl-relative-time': SlRelativeTime,
       'copiable-content': CopyableContent,
+      'attestation-folk': AttestationFolk
     };
   }
   static get styles() {
     return [
       sharedStyles,
       css`
-        .folk {
-          list-style: none;
-          margin: 2px;
-        }
         div {
           padding: 5px;
         }

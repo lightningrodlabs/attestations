@@ -26,6 +26,7 @@ import {
 import {EntryHashB64} from "@holochain-open-dev/core-types";
 import { VerifyAttestation } from "./verify-attestation";
 import { CopyableContent } from "./copiable-content";
+import { AttestationFolk } from "./attestation-folk";
 
 /**
  * @element attestations-controller
@@ -283,11 +284,10 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
       
       <div id="my-attestations" class="column attestations-list">
         <div class="row">
-          <div class="column">
-            <agent-avatar agent-pub-key="${this._profiles.myAgentPubKey}"></agent-avatar>
-            <copiable-content .content=${this._profiles.myAgentPubKey} ></copiable-content>
-          </div>
           <h4> My Attestations </h4>
+          <div class="column">
+          <attestation-folk .agent=${this._profiles.myAgentPubKey}></attestation-folk>
+          </div>
         </div>
         <mwc-button icon="add_circle" @click=${() => this.openAttestationDialog()}>Attestation</mwc-button>
 
@@ -310,7 +310,10 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
         </div>
       </div>
       <attestations-attestation id="selected-attestation" .attestationOutput=${this._currentAttestationOutput!}></attestations-attestation>
-      <verify-attestation> </verify-attestation>
+      <div id="verification-area" class="column">
+        <h4> Verification </h4>
+        <verify-attestation> </verify-attestation>
+      </div>
     </div>
 
     <attestations-attestation-dialog id="attestation-dialog"
@@ -342,6 +345,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
       'agent-avatar': AgentAvatar,
       'verify-attestation': VerifyAttestation,
       'copiable-content': CopyableContent,
+      'attestation-folk': AttestationFolk
     };
   }
 

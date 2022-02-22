@@ -5,6 +5,7 @@ import 'cqfill';
 
 export * from './elements/attestations-controller';
 export * from './elements/attestations-attestation';
+export * from './elements/attestation-folk';
 export * from './attestations.service';
 export * from './attestations.store';
 export * from './types';

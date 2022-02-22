@@ -10,6 +10,7 @@ import { Attestation, attestationsContext, Verifiable } from "../types";
 import { AttestationsStore } from "../attestations.store";
 import { Base64 } from "js-base64";
 import { decode } from "@msgpack/msgpack";
+import { AttestationFolk } from "./attestation-folk";
 
 export class VerifyAttestation extends ScopedElementsMixin(LitElement) {
   @query("#verifiable-field")
@@ -25,9 +26,6 @@ export class VerifyAttestation extends ScopedElementsMixin(LitElement) {
   @contextProvided({ context: attestationsContext })
   _store!: AttestationsStore;
 
-  static get styles() {
-    return sharedStyles;
-  }
   async check() {
     this._verificationError = "";
     try {
@@ -48,8 +46,9 @@ export class VerifyAttestation extends ScopedElementsMixin(LitElement) {
   }
   render() {
     const attestation = this._attestation
-      ? html` Content: ${this._attestation.content} About:
-        ${this._attestation.about}`
+      ? html`
+        <div>Content: ${this._attestation.content}</div>
+        <div>About: <attestation-folk .agent=${this._attestation.about}></attestation-folk></div>`
       : html`(Bare verifiable)`;
     const err = this._verificationError ? html`<h3 sytle="color:red">${this._verificationError}</h3>`: ""
     return html`
@@ -62,16 +61,29 @@ export class VerifyAttestation extends ScopedElementsMixin(LitElement) {
         label="Verifiable"
         required
       ></mwc-textarea>
+      <div class="verified">
       ${this._verifiable && this._verifiable.value != "" ? 
          (this._verified ? html`<h2>Verified</h2>${attestation}` : html`<h2>Verification Failed!</h2>${err}`)
           : ""}
-    `;
+      </div>`;
   }
+  static get styles() {
+    return [
+      sharedStyles,
+      css`
+        .verified {
+          margin: 5px;
+        }
+      `,
+    ];
+  }
+
   static get scopedElements() {
     return {
       "mwc-icon-button": IconButton,
       "mwc-textarea": TextArea,
       "attestations-attestation": AttestationsAttestation,
+      'attestation-folk': AttestationFolk
     };
   }
 }
