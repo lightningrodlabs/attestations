@@ -115,6 +115,13 @@ export default async (orchestrator) => {
     );
     t.equal(attestations[0].attesters.length, 2);
 
+    await alice_attestations.call(
+      "hc_zome_attestations",
+      "handshake",
+      {to: boboAgentKey,
+       oneTimeKey: "fish"}
+    );
+
   });
 
 };

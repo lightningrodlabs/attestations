@@ -1,24 +1,22 @@
-use hdk::prelude::*;
-
-use holo_hash::{EntryHashB64, AgentPubKeyB64};
+use holo_hash::{AgentPubKeyB64, EntryHashB64};
 
 use crate::attestation::*;
 
 #[derive(Serialize, Deserialize, SerializedBytes, Debug)]
-    #[serde(tag = "type", content = "content")]
+#[serde(tag = "type", content = "content")]
 pub enum Message {
     NewAttestation(Attestation),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-    #[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct SignalPayload {
     attestation_hash: EntryHashB64,
     message: Message,
 }
 
 impl SignalPayload {
-   pub fn new(attestation_hash: EntryHashB64, message: Message) -> Self {
+    pub fn new(attestation_hash: EntryHashB64, message: Message) -> Self {
         SignalPayload {
             attestation_hash,
             message,
@@ -41,15 +39,13 @@ pub struct NotifyInput {
     pub signal: SignalPayload,
 }
 
-
 #[hdk_extern]
 fn notify(input: NotifyInput) -> ExternResult<()> {
-    let mut folks : Vec<AgentPubKey> = vec![];
+    let mut folks: Vec<AgentPubKey> = vec![];
     for a in input.folks.clone() {
         folks.push(a.into())
     }
     debug!("Sending signal {:?} to {:?}", input.signal, input.folks);
-    remote_signal(ExternIO::encode(input.signal)?,folks)?;
+    remote_signal(ExternIO::encode(input.signal)?, folks)?;
     Ok(())
 }
-
