@@ -25,6 +25,7 @@ import {
 } from "@holochain-open-dev/profiles";
 import {EntryHashB64} from "@holochain-open-dev/core-types";
 import { VerifyAttestation } from "./verify-attestation";
+import { CopyableContent } from "./copiable-content";
 
 /**
  * @element attestations-controller
@@ -57,14 +58,14 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
   _searchField!: TextField;
   @query('#search-button')
   _searchButton!: Button;
-  @query("#y-attestation")
+  @query("#selected-attestation")
   _attestationElem!: AttestationsAttestation
 
   @query('#my-drawer')
   private _drawer!: Drawer;
 
   @state() _currentAttestationEh = "";
-  @state() _currentAttestationOutput! : AttestationOutput;
+  @state() _currentAttestationOutput : AttestationOutput | undefined;
   @state() noneFound = false;
 
   private initialized = false;
@@ -193,17 +194,23 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     return this.shadowRoot!.getElementById("attestation-dialog") as AttestationsAttestationDialog;
   }
 
-  private async handleAttestationSelected(e: any): Promise<void> {
+  private async handleAttestationSelected(e: any, attestations: Dictionary<AttestationOutput>): Promise<void> {
     const index = e.detail.index;
-    const attestationList = this.shadowRoot!.getElementById("attestations-list") as List;
-    const value = attestationList.items[index].value;
-    console.log("attestation value: " + value);
-    this.handleAttestationSelect(value);
-  }
+    const attestationList = e.target as List;
+    console.log(e.detail)
+    console.log("target", attestationList)
+    console.log("index", index)    
+    console.log("val", attestationList.items[index])
 
-  private async handleAttestationSelect(attestationEh: string): Promise<void> {
-    this._currentAttestationEh = attestationEh;
-    this._currentAttestationOutput =  this._myAttestations.value[attestationEh];
+    if (attestationList.items[index]) {
+      const value = attestationList.items[index].value;
+      this._currentAttestationEh = value;
+      this._currentAttestationOutput =  attestations[value];
+    } else {
+      this._currentAttestationEh = "";
+      this._currentAttestationOutput =  undefined;
+
+    }
   }
 
   openTopMenu() {
@@ -224,29 +231,15 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
   }
   async search() {
     const result = await this._store.searchAttestations(this._searchField.value)
-    console.log("FISH",Object.keys(result).length)
     this.noneFound = Object.keys(result).length == 0
   }
-
-  makeMyAttestationList(entries: Dictionary<AttestationOutput>, display: string) {
-    return Object.entries(entries).map(
-      ([key, attestationOutput]) => {
-        const attestation = attestationOutput.content
-        return html`
-          <mwc-list-item class="attestation-li" .selected=${key == this._currentAttestationEh} value="${key}">
-          <attestations-attestation id="attestations-attestation" .attestationOutput=${attestationOutput} .display=${display}></attestations-attestation>
-          </mwc-list-item>
-          `
-      })
-  }
-
 
   makeAttestationList(entries: Dictionary<AttestationOutput>, display: string) {
     return Object.entries(entries).map(
       ([key, attestationOutput]) => {
         const attestation = attestationOutput.content
         return html`
-          <mwc-list-item class="attestation-li" value="${key}" @click=${()=>this._currentAttestationOutput=attestationOutput}>
+          <mwc-list-item class="attestation-li" .selected=${key == this._currentAttestationEh} value="${key}">
           <attestations-attestation .attestationOutput=${attestationOutput} .display=${display}></attestations-attestation>
           </mwc-list-item>
           `
@@ -254,13 +247,10 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
   }
 
   render() {
-    if (!this._currentAttestationEh) {
-      return;
-    }
 
     /** Build attestation list */
-    const attestations = this.makeMyAttestationList(this._myAttestations.value, "compact") 
-    const searched = this.makeAttestationList(this._searchAttestations.value, "compact") 
+    const attestations = this.makeAttestationList(this._myAttestations.value, "compact") 
+    const searched = this.makeAttestationList(this._searchAttestations.value, "compact-with-who") 
     
     return html`
 <!--  DRAWER -->
@@ -274,13 +264,6 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     </mwc-list-item>
     <li divider role="separator"></li>
     </mwc-list>
-    <mwc-button icon="add_circle" @click=${() => this.openAttestationDialog()}>Attestation</mwc-button>
-
-    <!-- Attestation List -->
-    <mwc-list id="attestations-list" activatable @selected=${this.handleAttestationSelected}>
-      ${attestations}
-    </mwc-list>
-
   </div>
 <!-- END DRAWER -->
 
@@ -288,7 +271,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     <!-- TOP APP BAR -->
     <mwc-top-app-bar id="app-bar" dense style="position: relative;">
       <mwc-icon-button icon="menu" slot="navigationIcon"></mwc-icon-button>
-      <div slot="title">Attestations - ${this._attestationElem ? this._attestationElem.attestationOutput.content.content : "nothing"}</div>
+      <div slot="title">Who Said What (to/about Whom)</div>
       <mwc-icon-button slot="actionItems" icon="autorenew" @click=${() => this.refresh()} ></mwc-icon-button>
       <mwc-icon-button id="menu-button" slot="actionItems" icon="more_vert" @click=${() => this.openTopMenu()}></mwc-icon-button>
       <mwc-menu id="top-menu" @click=${this.handleMenuSelect}>
@@ -297,19 +280,36 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     </mwc-top-app-bar>
 
     <div class="appBody row">
-      <div id="search-area" class="column">
+      
+      <div id="my-attestations" class="column attestations-list">
+        <div class="row">
+          <div class="column">
+            <agent-avatar agent-pub-key="${this._profiles.myAgentPubKey}"></agent-avatar>
+            <copiable-content .content=${this._profiles.myAgentPubKey} ></copiable-content>
+          </div>
+          <h4> My Attestations </h4>
+        </div>
+        <mwc-button icon="add_circle" @click=${() => this.openAttestationDialog()}>Attestation</mwc-button>
+
+        <mwc-list id="my-attestations-list" activatable @selected=${(e:any)=>this.handleAttestationSelected(e,this._myAttestations.value)}>
+          ${attestations}
+        </mwc-list>
+      </div>
+        
+      <div id="search-area" class="column attestations-list">
+        <h4> Search Attestations </h4>
         <div class="search-controls">
           <mwc-textfield id="search-field" width="200" type="text" label="search" @input=${() => this._searchButton.disabled = !Boolean(this._searchField.value)}></mwc-textfield>    
           <mwc-button id="search-button" icon="search" @click=${async () => this.search()} disabled></mwc-button>
         </div>
         <div id="search-results">
           ${this.noneFound ? "Nothing found" : html`    
-          <mwc-list id="searched-attestations-list" activatable @selected=${()=>{}}>
+          <mwc-list id="searched-attestations-list" activatable @selected=${(e:any)=>this.handleAttestationSelected(e, this._searchAttestations.value)}>
             ${searched}
          </mwc-list>`}
         </div>
       </div>
-      <attestations-attestation id="x-attestation" .attestationOutput=${this._currentAttestationOutput}></attestations-attestation>
+      <attestations-attestation id="selected-attestation" .attestationOutput=${this._currentAttestationOutput!}></attestations-attestation>
       <verify-attestation> </verify-attestation>
     </div>
 
@@ -340,7 +340,8 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
       "attestations-attestation": AttestationsAttestation,
       "mwc-formfield": Formfield,
       'agent-avatar': AgentAvatar,
-      'verify-attestation': VerifyAttestation
+      'verify-attestation': VerifyAttestation,
+      'copiable-content': CopyableContent,
     };
   }
 
@@ -369,6 +370,15 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
           margin-top: -15px;
         }
 
+        .attestations-list {
+          margin: 10px;
+          border-right: black 1px solid;
+        }
+
+        #selected-attestation {
+          border-right: black 1px solid;
+        }
+
         .appBody {
           width: 100%;
           margin-top: 2px;
@@ -389,11 +399,6 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
 
         #search-results ul {
           list-style:none;
-        }
-
-        #x-attestation {
-          border-radius: 10px;
-          border: black 1px solid;
         }
 
         mwc-textfield.rounded {

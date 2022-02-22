@@ -44,8 +44,7 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
   }
   render() {
     if (!this.attestationOutput) {
-      return html`nothing`
-//      return;
+      return html``
     } 
     /** Get current attestation and zoom level */
     const attestation = this.attestationOutput.content
@@ -54,17 +53,25 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
       case "compact":
         return html`${attestation.content} <agent-avatar agent-pub-key="${attestation.about}"></agent-avatar>`
         break;
+      case "compact-with-who":
+        const who = this.attestationOutput.attesters.map((a)=> html`<agent-avatar agent-pub-key="${a.author}"></agent-avatar>`)
+        return html`${who} ${attestation.content} <agent-avatar agent-pub-key="${attestation.about}"></agent-avatar>`
+        break;
       case "full":
         return html`
-        <div class="row">
+        <div class="column">
+          <div class="row">
+        <div><h4>Attesting: </h4>${attestation.content}</div> 
+        <div class="about"><h4>About:</h4> ${this.folk(attestation.about)} <copiable-content .content=${attestation.about} ></copiable-content></div>
+    </div>
         <div class="attesters">
           <h4>Attesters:  ${this.attestationOutput.attesters.length}</h4>
           <ul class="column">
             ${this.attestationOutput.attesters.map((context) => {
               const date = new Date(context.timestamp/1000)
               return html`
+                <div class="row">
                 <div> Who: ${this.folk(context.author)} <copiable-content .content=${attestation.about} ></copiable-content></div>
-                <div class="column">
                 <div>When: <sl-relative-time .date=${date}></sl-relative-time></div>
                 <div>Bare Verifiable: <copiable-content .content=${encode(this.attestationOutput.verifiable)}></copiable-content></div>
                 <div>Full Verifiable: <copiable-content .content=${
@@ -75,8 +82,6 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
             })}
           </ul>
         </div>
-        <div><h4>Attesting: </h4>${attestation.content}</div> 
-        <div class="about"><h4>About:</h4> ${this.folk(attestation.about)} <copiable-content .content=${attestation.about} ></copiable-content></div>
         </div>
       `;          
     }
