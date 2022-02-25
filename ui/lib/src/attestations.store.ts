@@ -79,7 +79,8 @@ export class AttestationsStore {
   async searchAttestations(search: string) : Promise<Dictionary<AttestationOutput>> {
     const input : GetAttestationsInput = {}
     if (search.startsWith("uhCA")) {
-      input.agent = search
+      input.of = search
+      input.of = search
     } else {
       input.content = search
     }

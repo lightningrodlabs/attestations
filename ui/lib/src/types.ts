@@ -29,7 +29,8 @@ export interface AttestationOutput {
 
 export interface GetAttestationsInput {
   content?: string,
-  agent?: AgentPubKeyB64,
+  by?: AgentPubKeyB64,
+  of?: AgentPubKeyB64,
 }
 
 export interface AttestationEntry {

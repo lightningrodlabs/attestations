@@ -59,7 +59,8 @@ fn create_attestation(input: Attestation) -> ExternResult<EntryHashB64> {
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct GetAttestationsInput {
     pub content: Option<String>,
-    pub agent: Option<AgentPubKeyB64>,
+    pub by: Option<AgentPubKeyB64>,
+    pub of: Option<AgentPubKeyB64>,
 }
 
 ///
@@ -68,20 +69,26 @@ fn get_attestations(input: GetAttestationsInput) -> ExternResult<Vec<Attestation
     match input.content {
         Some(content) => {
             let base = Path::from(content).path_entry_hash()?;
-            let tag = match input.agent {
+            let tag = match input.of {
                 Some(agent) => Some(LinkTag::new(agent.to_string())),
                 None => None
             };
             let attestations = get_attestations_inner(base, tag)?;
             Ok(attestations)
         },
-        None => match input.agent {
-            Some(agent) => {
+        None => {
+            let mut results: Vec<AttestationOutput> = vec![];
+            if let Some(agent) = input.of {
+                    let base = get_agent_attestations_base(agent.into())?;
+                    let mut attestations = get_attestations_inner(base, Some(LinkTag::new("of")))?;
+                    results.append(&mut attestations);
+            };
+            if let Some(agent) = input.by {
                 let base = get_agent_attestations_base(agent.into())?;
-                let attestations = get_attestations_inner(base, Some(LinkTag::new("of")))?;
-                Ok(attestations)
-            },
-            None => Ok(vec![])
+                let mut attestations = get_attestations_inner(base, Some(LinkTag::new("by")))?;
+                results.append(&mut attestations);
+            };
+            Ok(results)
         }
     }
 }
