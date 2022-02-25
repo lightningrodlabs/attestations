@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 pub use hdk::prelude::*;
 use hdk::prelude::holo_hash::{AgentPubKeyB64, EntryHashB64};
 
@@ -77,18 +79,23 @@ fn get_attestations(input: GetAttestationsInput) -> ExternResult<Vec<Attestation
             Ok(attestations)
         },
         None => {
-            let mut results: Vec<AttestationOutput> = vec![];
+            // collect results in a hashmap to remove dups
+            let mut results: HashMap<EntryHashB64,AttestationOutput> = HashMap::new();
             if let Some(agent) = input.of {
                     let base = get_agent_attestations_base(agent.into())?;
-                    let mut attestations = get_attestations_inner(base, Some(LinkTag::new("of")))?;
-                    results.append(&mut attestations);
+                    let attestations = get_attestations_inner(base, Some(LinkTag::new("of")))?;
+                    for a in attestations {
+                        results.insert(a.hash.clone(), a);
+                    }
             };
             if let Some(agent) = input.by {
                 let base = get_agent_attestations_base(agent.into())?;
-                let mut attestations = get_attestations_inner(base, Some(LinkTag::new("by")))?;
-                results.append(&mut attestations);
+                let attestations = get_attestations_inner(base, Some(LinkTag::new("by")))?;
+                for a in attestations {
+                    results.insert(a.hash.clone(), a);
+                }
             };
-            Ok(results)
+            Ok(results.into_iter().map(|(_,a)| a).collect())
         }
     }
 }

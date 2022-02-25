@@ -74,9 +74,28 @@ export default async (orchestrator) => {
     attestations = await alice_attestations.call(
       "hc_zome_attestations",
       "get_attestations",
-      {agent: boboAgentKey}
+      {of: boboAgentKey}
     );
     console.log(attestations);
+    checkAttestations(t,attestations[0], attestation1, attestation1_hash, [aliceAgentKey])
+
+    attestations = await alice_attestations.call(
+      "hc_zome_attestations",
+      "get_attestations",
+      {by: aliceAgentKey}
+    );
+    console.log(attestations);
+    t.is(attestations.length,1)
+    checkAttestations(t,attestations[0], attestation1, attestation1_hash, [aliceAgentKey])
+
+    attestations = await alice_attestations.call(
+      "hc_zome_attestations",
+      "get_attestations",
+      {by: aliceAgentKey,
+       of: boboAgentKey}
+    );
+    console.log(attestations);
+    t.is(attestations.length,1)
     checkAttestations(t,attestations[0], attestation1, attestation1_hash, [aliceAgentKey])
 
     attestations = await alice_attestations.call(
