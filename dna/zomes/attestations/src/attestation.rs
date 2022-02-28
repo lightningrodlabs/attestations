@@ -54,7 +54,7 @@ fn create_attestation(input: Attestation) -> ExternResult<EntryHashB64> {
     create_link(get_agent_attestations_base(input.about.clone().into())?, hash.clone(), LinkTag::new("of"))?;
     let path = Path::from(input.content);
     path.ensure()?;
-    create_link(path.path_entry_hash()?, hash.clone(), LinkTag::new(input.about.to_string()))?;
+    create_link(path.path_entry_hash()?, hash.clone(), LinkTag::from(AgentPubKey::from(input.about).as_ref().to_vec()))?;
     Ok(hash.into())
 }
 
@@ -72,7 +72,7 @@ fn get_attestations(input: GetAttestationsInput) -> ExternResult<Vec<Attestation
         Some(content) => {
             let base = Path::from(content).path_entry_hash()?;
             let tag = match input.of {
-                Some(agent) => Some(LinkTag::new(agent.to_string())),
+                Some(agent) => Some(LinkTag::new(AgentPubKey::from(agent).as_ref().to_vec())),
                 None => None
             };
             let attestations = get_attestations_inner(base, tag)?;
