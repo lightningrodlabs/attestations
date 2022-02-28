@@ -43,7 +43,7 @@ export default async (orchestrator) => {
 
     // Create an attestation
     let attestation1 = {
-      content: "Bobbo is cool!",
+      content: "Cool Person",
       about: boboAgentKey,
     };
 
@@ -101,7 +101,7 @@ export default async (orchestrator) => {
     attestations = await alice_attestations.call(
       "hc_zome_attestations",
       "get_attestations",
-      {content: "Bobbo is cool!"}
+      {content: "Cool Person"}
     );
     console.log("Should be bobbo", attestations);
     checkAttestations(t,attestations[0], attestation1, attestation1_hash, [aliceAgentKey])
@@ -133,6 +133,32 @@ export default async (orchestrator) => {
       "get_my_attestations",
     );
     t.equal(attestations[0].attesters.length, 2);
+
+    // now have bobbo say Alice is a cool person
+    const attestation2 = {
+      content: "Cool Person",
+      about: aliceAgentKey,
+    };
+    const attestation3_hash = await bobbo_attestations.call(
+      "hc_zome_attestations",
+      "create_attestation",
+      attestation2
+    );
+    t.ok(attestation3_hash);
+    console.log("attestation3_hash", attestation1_hash);
+
+    attestations = await bobbo_attestations.call(
+      "hc_zome_attestations",
+      "get_attestations",
+      //{content: "Cool Person"}
+      {by: boboAgentKey,
+       of: boboAgentKey
+      }
+    );
+    console.log(attestations);
+    t.is(attestations.length,2)
+
+
 
     await alice_attestations.call(
       "hc_zome_attestations",
