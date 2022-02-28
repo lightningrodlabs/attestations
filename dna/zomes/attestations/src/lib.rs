@@ -26,7 +26,8 @@ fn init(_: ()) -> ExternResult<InitCallbackResult> {
 
 entry_defs![
     PathEntry::entry_def(),
-    attestation::Attestation::entry_def()
+    attestation::Attestation::entry_def(),
+    handshake::Nonce::entry_def()
 ];
 
 #[hdk_extern]

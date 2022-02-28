@@ -11,7 +11,7 @@ use crate::error::*;
 #[serde(rename_all="camelCase")]
 pub struct Verifiable {
     pub attestation: Option<Attestation>,
-    signed_headers: Vec<SignedHeaderHashed>,
+    pub signed_headers: Vec<SignedHeaderHashed>,
 }
 
 /// Attestation entry definition
@@ -30,10 +30,10 @@ pub struct AttestationContext {
 #[derive(Clone, Serialize, Deserialize, Debug)]
 #[serde(rename_all="camelCase")]
 pub struct AttestationOutput {
-    hash: EntryHashB64,
-    attesters: Vec<AttestationContext>,
-    content: Attestation,
-    verifiable: Verifiable,
+    pub hash: EntryHashB64,
+    pub attesters: Vec<AttestationContext>,
+    pub content: Attestation,
+    pub verifiable: Verifiable,
 }
 
 fn get_my_attestations_base() -> ExternResult<EntryHash> {
@@ -46,7 +46,7 @@ fn get_agent_attestations_base(agent: AgentPubKey) -> ExternResult<EntryHash> {
 }
 
 #[hdk_extern]
-fn create_attestation(input: Attestation) -> ExternResult<EntryHashB64> {
+pub fn create_attestation(input: Attestation) -> ExternResult<EntryHashB64> {
     let _header_hash = create_entry(&input)?;
     let hash = hash_entry(input.clone())?;
 //    emit_signal(&SignalPayload::new(hash.clone().into(), Message::NewAttestation(input.clone())))?;
@@ -67,7 +67,7 @@ pub struct GetAttestationsInput {
 
 ///
 #[hdk_extern]
-fn get_attestations(input: GetAttestationsInput) -> ExternResult<Vec<AttestationOutput>> {
+pub fn get_attestations(input: GetAttestationsInput) -> ExternResult<Vec<AttestationOutput>> {
     match input.content {
         Some(content) => {
             let base = Path::from(content).path_entry_hash()?;
@@ -109,7 +109,7 @@ fn get_my_attestations(_: ()) -> ExternResult<Vec<AttestationOutput>> {
 }
 
 
-fn get_attestations_inner(base: EntryHash, maybe_tag: Option<LinkTag>) -> AttestationsResult<Vec<AttestationOutput>> {
+pub fn get_attestations_inner(base: EntryHash, maybe_tag: Option<LinkTag>) -> AttestationsResult<Vec<AttestationOutput>> {
     let links = get_links(base, maybe_tag)?;
 
     let get_input = links
@@ -150,7 +150,7 @@ fn get_attestations_inner(base: EntryHash, maybe_tag: Option<LinkTag>) -> Attest
 
 ///
 #[hdk_extern]
-fn verify(input: Verifiable) -> ExternResult<()>  {
+pub fn verify(input: Verifiable) -> ExternResult<()>  {
     for signed_header in input.signed_headers {
         if let Some(ref attestation) = input.attestation {
             let hash = hash_entry(attestation)?;

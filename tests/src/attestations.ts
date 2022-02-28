@@ -47,14 +47,6 @@ export default async (orchestrator) => {
       about: boboAgentKey,
     };
 
-    a_and_b_conductor.setSignalHandler((signal) => {
-      console.log("Received Signal:", signal);
-      t.deepEqual(signal.data.payload.message, {
-        type: "NewAttestation",
-        content: attestation1,
-      });
-    });
-
     const attestation1_hash = await alice_attestations.call(
       "hc_zome_attestations",
       "create_attestation",
@@ -158,14 +150,35 @@ export default async (orchestrator) => {
     console.log(attestations);
     t.is(attestations.length,2)
 
-
-
-    await alice_attestations.call(
+    let nonce = await alice_attestations.call(
       "hc_zome_attestations",
-      "handshake",
-      {to: boboAgentKey,
-       oneTimeKey: "fish"}
+      "handshake_make_nonce",
+      boboAgentKey,
     );
+    console.log("nonce:", nonce)
+
+    a_and_b_conductor.setSignalHandler((signal) => {
+      console.log("Received Signal:", signal);
+      t.deepEqual(signal.data.payload, {
+        nonce: `${nonce}`,
+        from: boboAgentKey
+      });
+    });
+
+    let result = await bobbo_attestations.call(
+      "hc_zome_attestations",
+      "handshake_commit_nonce",
+      {to: aliceAgentKey,
+       nonce},
+    );
+    console.log("result:", result)
+    attestations = await bobbo_attestations.call(
+      "hc_zome_attestations",
+      "get_attestations",
+      {by: boboAgentKey}
+    );
+    console.log(attestations);
+    t.is(attestations.length,3)
 
   });
 
