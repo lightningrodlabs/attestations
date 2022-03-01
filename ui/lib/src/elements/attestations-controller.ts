@@ -9,7 +9,7 @@ import { sharedStyles } from "../sharedStyles";
 import {attestationsContext, Attestation, AttestationOutput, Dictionary, Signal} from "../types";
 import { AttestationsStore } from "../attestations.store";
 import { AttestationsAttestation } from "./attestations-attestation";
-import { AttestationsAttestationDialog } from "./attestations-attestation-dialog";
+import { AttestationsAttestationDialog, DialogType } from "./attestations-attestation-dialog";
 import { ScopedElementsMixin } from "@open-wc/scoped-elements";
 import {
   ListItem,
@@ -186,9 +186,9 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     await this._profiles.fetchAllProfiles()
   }
 
-  async openAttestationDialog(attestation?: any) {
+  async openAttestationDialog(type: DialogType) {
     this.attestationDialogElem.resetAllFields();
-    this.attestationDialogElem.open(attestation);
+    this.attestationDialogElem.open(type);
   }
 
   get attestationDialogElem() : AttestationsAttestationDialog {
@@ -223,8 +223,11 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     console.log("handleMenuSelect: " + e.originalTarget.innerHTML)
     //console.log({e})
     switch (e.originalTarget.innerHTML) {
-      case "Duplicate Attestation":
-        this.openAttestationDialog(this._currentAttestationEh)
+      case "Generate Nonce":
+        this.openAttestationDialog(DialogType.CreateNonce)
+        break;
+      case "Fulfill Nonce":
+        this.openAttestationDialog(DialogType.FulfilNonce)
         break;
       default:
         break;
@@ -276,7 +279,8 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
       <mwc-icon-button slot="actionItems" icon="autorenew" @click=${() => this.refresh()} ></mwc-icon-button>
       <mwc-icon-button id="menu-button" slot="actionItems" icon="more_vert" @click=${() => this.openTopMenu()}></mwc-icon-button>
       <mwc-menu id="top-menu" @click=${this.handleMenuSelect}>
-        <mwc-list-item graphic="icon" value="fork_attestation"><span>Duplicate Attestation</span><mwc-icon slot="graphic">edit</mwc-icon></mwc-list-item>
+      <mwc-list-item graphic="icon" value="gen_nonce"><span>Generate Nonce</span><mwc-icon slot="graphic">edit</mwc-icon></mwc-list-item>
+      <mwc-list-item graphic="icon" value="fill_nonce"><span>Fulfill Nonce</span><mwc-icon slot="graphic">edit</mwc-icon></mwc-list-item>
       </mwc-menu>
     </mwc-top-app-bar>
 
@@ -289,7 +293,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
           <attestation-folk .agent=${this._profiles.myAgentPubKey}></attestation-folk>
           </div>
         </div>
-        <mwc-button icon="add_circle" @click=${() => this.openAttestationDialog()}>Attestation</mwc-button>
+        <mwc-button icon="add_circle" @click=${() => this.openAttestationDialog(DialogType.Attestation)}>Attestation</mwc-button>
 
         <mwc-list id="my-attestations-list" activatable @selected=${(e:any)=>this.handleAttestationSelected(e,this._myAttestations.value)}>
           ${attestations}

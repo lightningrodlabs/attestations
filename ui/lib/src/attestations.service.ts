@@ -1,6 +1,6 @@
 import { CellClient } from '@holochain-open-dev/cell-client';
 import { serializeHash, EntryHashB64, AgentPubKeyB64 } from '@holochain-open-dev/core-types';
-import {AttestationOutput, Attestation, AttestationEntry, Signal, GetAttestationsInput, Verifiable} from './types';
+import {AttestationOutput, Attestation, AttestationEntry, Signal, GetAttestationsInput, Verifiable, FulfillNonceInput} from './types';
 
 export class AttestationsService {
   constructor(
@@ -33,6 +33,14 @@ export class AttestationsService {
       content : entry.content,
       about: entry.about,
     }
+  }
+
+  async createNonce(agent: AgentPubKeyB64): Promise<number> {
+    return this.callZome('create_nonce', agent);
+  }
+
+  async fulfillNonce(input: FulfillNonceInput): Promise<void> {
+    return this.callZome('fulfill_nonce', input);
   }
 
   async verify(input: Verifiable): Promise<boolean> {

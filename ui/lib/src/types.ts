@@ -49,3 +49,7 @@ export type Signal =
     attestationHash: EntryHashB64, message: {type: "NewAttestation", content:  AttestationEntry}
   }
   
+export interface FulfillNonceInput {
+  with: AgentPubKeyB64,
+  nonce: number,
+}

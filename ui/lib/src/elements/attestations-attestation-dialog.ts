@@ -5,7 +5,7 @@ import {sharedStyles} from "../sharedStyles";
 import {contextProvided} from "@holochain-open-dev/context";
 import {ScopedElementsMixin} from "@open-wc/scoped-elements";
 import {AttestationsStore} from "../attestations.store";
-import {Attestation, attestationsContext} from "../types";
+import {Attestation, attestationsContext, FulfillNonceInput} from "../types";
 import {EntryHashB64, AgentPubKeyB64} from "@holochain-open-dev/core-types";
 import {
   Button,
@@ -14,12 +14,19 @@ import {
 } from "@scoped-elements/material-web";
 import {Profile, SearchAgent, AgentAvatar} from "@holochain-open-dev/profiles";
 
+export enum DialogType {
+  Attestation,
+  CreateNonce,
+  FulfilNonce,
+}
+
 /**
  * @element attestations-attestation-dialog
  */
 export class AttestationsAttestationDialog extends ScopedElementsMixin(LitElement) {
 
   @property() myProfile: Profile| undefined = undefined;
+  @property() type: DialogType = DialogType.Attestation;
 
   /** Dependencies */
   @contextProvided({ context: attestationsContext })
@@ -33,11 +40,27 @@ export class AttestationsAttestationDialog extends ScopedElementsMixin(LitElemen
   @state() _about: AgentPubKeyB64 = ""
   @state() _profile: Profile | undefined = undefined
 
+  dialogTitle(): string {
+    switch (this.type) {
+      case DialogType.Attestation: return "New Attestation"
+      case DialogType.FulfilNonce: return "Fulfill Nonce"
+      case DialogType.CreateNonce: return "Create Nonce"
+    }
+  }
+
+  agentFieldTitle(): string {
+    switch (this.type) {
+      case DialogType.Attestation: return "About"
+      case DialogType.FulfilNonce: return "With"
+      case DialogType.CreateNonce: return "For"
+    }
+  }
+
   /**
    *
    */
-  open(attestationToPreload?: EntryHashB64) {
-    this._attestationToPreload = attestationToPreload;
+  open(type: DialogType) {
+    this.type = type 
     this.requestUpdate();
     const dialog = this.shadowRoot!.getElementById("attestation-dialog") as Dialog
     dialog.open = true
@@ -48,20 +71,46 @@ export class AttestationsAttestationDialog extends ScopedElementsMixin(LitElemen
    */
   private async handleOk(e: any) {
     /** Check validity */
-    // contentField
-    let isValid = this._contentField.validity.valid
 
-    if (!this._contentField.validity.valid) {
-      this._contentField.reportValidity()
+    let isValid = true;
+    if (this.type != DialogType.CreateNonce) {
+      // contentField
+      isValid = this._contentField.validity.valid
+
+      if (!this._contentField.validity.valid) {
+        this._contentField.reportValidity()
+      }
     }
-    const attestation: Attestation = {
-      content: this._contentField.value,
-      about: this._about,
-    };
+    if (!isValid) return
+    if (!this._about) {
+      return
+    }
 
-    // - Add attestation to commons
-    const newAttestation = await this._store.addAttestation(attestation);
-    this.dispatchEvent(new CustomEvent('attestation-added', { detail: newAttestation, bubbles: true, composed: true }));
+    switch (this.type) {
+      case DialogType.Attestation:
+        const attestation: Attestation = {
+          content: this._contentField.value,
+          about: this._about,
+        };
+          // - Add attestation
+        const newAttestation = await this._store.addAttestation(attestation);
+        this.dispatchEvent(new CustomEvent('attestation-added', { detail: newAttestation, bubbles: true, composed: true }));       
+        break;
+      case DialogType.CreateNonce:
+        const nonce = await this._store.createNonce(this._about);
+        alert(nonce)
+        break;
+      case DialogType.FulfilNonce:
+        const fulfill: FulfillNonceInput = {
+          nonce: parseInt(this._contentField.value),
+          with: this._about,
+        };
+        const result = await this._store.fulfillNonce(fulfill);
+        break;
+      
+    }
+
+
     // - Clear all fields
     // this.resetAllFields();
     // - Close dialog
@@ -70,7 +119,10 @@ export class AttestationsAttestationDialog extends ScopedElementsMixin(LitElemen
   }
 
   resetAllFields() {
-    this._contentField.value = ''
+    if (this._contentField) {
+      this._contentField.value = ''
+    }
+    this._about = ""
   }
 
   private async handleDialogOpened(e: any) {
@@ -97,18 +149,19 @@ export class AttestationsAttestationDialog extends ScopedElementsMixin(LitElemen
   }
 
   render() {
-    const about = this._profile ? html`
+    const about = this._profile && this._about ? html`
     <li class="folk">
         <agent-avatar agent-pub-key="${this._about}"></agent-avatar>
           <div>${this._profile.nickname}</div>
         </li>` :""
     return html`
-<mwc-dialog id="attestation-dialog" heading="New attestation" @closing=${this.handleDialogClosing} @opened=${this.handleDialogOpened}>
+<mwc-dialog id="attestation-dialog" heading=${this.dialogTitle()} @closing=${this.handleDialogClosing} @opened=${this.handleDialogOpened}>
+  ${ (this.type != DialogType.CreateNonce) ? html`
   <mwc-textfield dialogInitialFocus type="text"
                  @input=${() => (this.shadowRoot!.getElementById("content-field") as TextField).reportValidity()}
-                 id="content-field" minlength="3" maxlength="64" label="content" autoValidate=true required></mwc-textfield>
+                 id="content-field" minlength="3" maxlength="64" label=${this.type == DialogType.Attestation ? "Content" : "Nonce"} autoValidate=true required></mwc-textfield>` : ""}
 
-  About: ${about}
+  ${this.agentFieldTitle()} : ${about}
   <search-agent
   @closing=${(e:any)=>e.stopPropagation()}
   @agent-selected="${this.setAbout}"

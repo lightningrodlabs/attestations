@@ -6,7 +6,7 @@ pub use hdk::prelude::*;
 
 pub mod attestation;
 pub mod error;
-pub mod handshake;
+pub mod nonce;
 pub mod signals;
 
 #[hdk_extern]
@@ -14,7 +14,7 @@ fn init(_: ()) -> ExternResult<InitCallbackResult> {
     // grant unrestricted access to accept_cap_claim so other agents can send us claims
     let mut functions = BTreeSet::new();
     functions.insert((zome_info()?.name, "recv_remote_signal".into()));
-    functions.insert((zome_info()?.name, "recv_handshake".into()));
+    functions.insert((zome_info()?.name, "recv_fulfillment".into()));
     create_cap_grant(CapGrantEntry {
         tag: "".into(),
         // empty access converts to unrestricted
@@ -27,7 +27,7 @@ fn init(_: ()) -> ExternResult<InitCallbackResult> {
 entry_defs![
     PathEntry::entry_def(),
     attestation::Attestation::entry_def(),
-    handshake::Nonce::entry_def()
+    nonce::Nonce::entry_def()
 ];
 
 #[hdk_extern]

@@ -20,33 +20,32 @@ impl Nonce {
 }
 
 #[hdk_extern]
-fn handshake_make_nonce(agent: AgentPubKeyB64) -> ExternResult<u32> {
+fn create_nonce(agent: AgentPubKeyB64) -> ExternResult<u32> {
     let nonce = Nonce::new(agent)?;
     let _header_hash = create_entry(&nonce)?;
     Ok(nonce.id)
 }
 
-/// Input to the handshake call
+/// Input to the fulfill_nonce call
 #[derive(Serialize, Deserialize, SerializedBytes, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct HandshakeInput {
-    pub to: AgentPubKeyB64,
+pub struct FulfillNonceInput {
+    pub with: AgentPubKeyB64,
     pub nonce: u32,
 }
 
 #[derive(Serialize, Deserialize, SerializedBytes, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct Handshake {
+pub struct FulfillNonceWire {
     pub header: SignedHeaderHashed,
     pub nonce: String,
 }
 
-
 #[hdk_extern]
-fn handshake_commit_nonce(input: HandshakeInput) -> ExternResult<()> {
+fn fulfill_nonce(input: FulfillNonceInput) -> ExternResult<()> {
     let a = Attestation {
         content: input.nonce.to_string(),
-        about: input.to.clone(),
+        about: input.with.clone(),
     };
     attestation::create_attestation(a.clone())?;
     let get_input = GetAttestationsInput {
@@ -55,23 +54,23 @@ fn handshake_commit_nonce(input: HandshakeInput) -> ExternResult<()> {
         by: None,
     };
     let attestations = attestation::get_attestations(get_input)?;
-    let handshake = Handshake {
+    let fulfillment = FulfillNonceWire {
         header: attestations[0].verifiable.signed_headers[0].clone(),
         nonce: input.nonce.to_string(),
     };
     let result = call_remote(
-        input.to.into(),
+        input.with.into(),
         "hc_zome_attestations".into(),
-        "recv_handshake".into(),
+        "recv_fulfillment".into(),
         None,
-        ExternIO::encode(handshake)?, //input.one_time_key.to_string(),
+        ExternIO::encode(fulfillment)?, //input.one_time_key.to_string(),
     )?;
     if let ZomeCallResponse::Ok(io) = result {
         let decoded_result: () = ExternIO::decode(&io)?;
         debug!("got return value {:?}", decoded_result);
         Ok(())
     } else {
-        Err(WasmError::Guest(format!("Handshake error: {:?}", result)))
+        Err(WasmError::Guest(format!("Nonce error: {:?}", result)))
     }
 }
 
@@ -90,20 +89,20 @@ pub struct  NonceReceived {
 }
 
 #[hdk_extern]
-fn recv_handshake(input: ExternIO) -> ExternResult<()> {
+fn recv_fulfillment(input: ExternIO) -> ExternResult<()> {
     //let me: AgentPubKeyB64 = agent_info()?.agent_latest_pubkey.into();
     let caller: AgentPubKeyB64 = call_info()?.provenance.into();
     let me = agent_info()?.agent_latest_pubkey;
     debug!("agent info: {:?}", me);
     let meb64: AgentPubKeyB64 = me.into();
-    let handshake: Handshake = ExternIO::decode(&input)?;
+    let fulfillment: FulfillNonceWire = ExternIO::decode(&input)?;
 
     // lookup nonce private entry locally and confirm that the signature and the caller match
     // by building a verifiable with a constructed attestation and calling verify
     let q = ChainQueryFilter::default().entry_type(entry_type!(Nonce)?).include_entries(true);
     let results : Vec<Nonce> = query(q)?.into_iter().filter_map(|element|{
         let nonce: Nonce = element.entry().to_app_option().ok()??;
-        if nonce.id.to_string() == handshake.nonce && nonce.with == caller {
+        if nonce.id.to_string() == fulfillment.nonce && nonce.with == caller {
             Some(nonce)
         } else {
             None
@@ -112,14 +111,14 @@ fn recv_handshake(input: ExternIO) -> ExternResult<()> {
     if results.len() == 0 {
         return Err(WasmError::Guest("No such nonce".into()))
     }
-    let attestation = Attestation {content: handshake.nonce.clone(), about: meb64};
+    let attestation = Attestation {content: fulfillment.nonce.clone(), about: meb64};
     let verifiable = Verifiable {
         attestation: Some(attestation),
-        signed_headers: vec![handshake.header.clone()]
+        signed_headers: vec![fulfillment.header.clone()]
     };
     attestation::verify(verifiable.clone())?;
     // tell the client we got valid nonce
-    emit_signal(&NonceReceived{nonce: handshake.nonce, from: caller.into()})?;
+    emit_signal(&NonceReceived{nonce: fulfillment.nonce, from: caller.into()})?;
     Ok(())
 }
 
