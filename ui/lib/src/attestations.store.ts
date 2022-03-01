@@ -10,6 +10,7 @@ import {
   GetAttestationsInput,
   Verifiable,
   FulfillNonceInput,
+  CreateNonceInput,
 } from './types';
 import {
   ProfilesStore,
@@ -117,8 +118,8 @@ export class AttestationsStore {
     return this.service.verify(input)
   }
 
-  createNonce(agent:AgentPubKeyB64) : Promise<number> {
-    return this.service.createNonce(agent)
+  createNonce(input: CreateNonceInput) : Promise<number> {
+    return this.service.createNonce(input)
   }
 
   fulfillNonce(input:FulfillNonceInput) : Promise<void> {

@@ -53,3 +53,7 @@ export interface FulfillNonceInput {
   with: AgentPubKeyB64,
   nonce: number,
 }
+export interface CreateNonceInput {
+  with: AgentPubKeyB64,
+  note: string,
+}

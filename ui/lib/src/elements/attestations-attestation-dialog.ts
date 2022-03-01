@@ -5,7 +5,7 @@ import {sharedStyles} from "../sharedStyles";
 import {contextProvided} from "@holochain-open-dev/context";
 import {ScopedElementsMixin} from "@open-wc/scoped-elements";
 import {AttestationsStore} from "../attestations.store";
-import {Attestation, attestationsContext, FulfillNonceInput} from "../types";
+import {Attestation, attestationsContext, CreateNonceInput, FulfillNonceInput} from "../types";
 import {EntryHashB64, AgentPubKeyB64} from "@holochain-open-dev/core-types";
 import {
   Button,
@@ -56,6 +56,14 @@ export class AttestationsAttestationDialog extends ScopedElementsMixin(LitElemen
     }
   }
 
+  conentFieldTitle(): string {
+    switch (this.type) {
+      case DialogType.Attestation: return "Content"
+      case DialogType.FulfilNonce: return "Nonce"
+      case DialogType.CreateNonce: return "Notes"
+    }
+  }
+
   /**
    *
    */
@@ -97,7 +105,11 @@ export class AttestationsAttestationDialog extends ScopedElementsMixin(LitElemen
         this.dispatchEvent(new CustomEvent('attestation-added', { detail: newAttestation, bubbles: true, composed: true }));       
         break;
       case DialogType.CreateNonce:
-        const nonce = await this._store.createNonce(this._about);
+        const input: CreateNonceInput = {
+          note: this._contentField.value,
+          with: this._about,
+        };
+        const nonce = await this._store.createNonce(input);
         alert(nonce)
         break;
       case DialogType.FulfilNonce:
@@ -156,10 +168,10 @@ export class AttestationsAttestationDialog extends ScopedElementsMixin(LitElemen
         </li>` :""
     return html`
 <mwc-dialog id="attestation-dialog" heading=${this.dialogTitle()} @closing=${this.handleDialogClosing} @opened=${this.handleDialogOpened}>
-  ${ (this.type != DialogType.CreateNonce) ? html`
+  
   <mwc-textfield dialogInitialFocus type="text"
-                 @input=${() => (this.shadowRoot!.getElementById("content-field") as TextField).reportValidity()}
-                 id="content-field" minlength="3" maxlength="64" label=${this.type == DialogType.Attestation ? "Content" : "Nonce"} autoValidate=true required></mwc-textfield>` : ""}
+    @input=${() => (this.shadowRoot!.getElementById("content-field") as TextField).reportValidity()}
+    id="content-field" minlength="3" maxlength="64" label=${this.conentFieldTitle()} autoValidate=true required></mwc-textfield>
 
   ${this.agentFieldTitle()} : ${about}
   <search-agent

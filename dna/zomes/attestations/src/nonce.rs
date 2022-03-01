@@ -9,19 +9,29 @@ use crate::attestation::{Attestation, self, GetAttestationsInput, Verifiable};
 #[derive(Clone)]
 pub struct Nonce {
     pub id: u32,
+    pub note: String,
     pub with: AgentPubKeyB64,
 }
+
+/// Input to the fulfill_nonce call
+#[derive(Serialize, Deserialize, SerializedBytes, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateNonceInput {
+    pub with: AgentPubKeyB64,
+    pub note: String,
+}
+
 impl Nonce {
-    pub fn new(with: AgentPubKeyB64) -> ExternResult<Nonce> {
+    pub fn new(input: CreateNonceInput) -> ExternResult<Nonce> {
         let id_bytes = random_bytes(4)?;
         let id: u32 = as_u32_be(&id_bytes);    
-        Ok(Nonce { id, with })
+        Ok(Nonce { id, with: input.with, note: input.note })
     }
 }
 
 #[hdk_extern]
-fn create_nonce(agent: AgentPubKeyB64) -> ExternResult<u32> {
-    let nonce = Nonce::new(agent)?;
+fn create_nonce(input: CreateNonceInput) -> ExternResult<u32> {
+    let nonce = Nonce::new(input)?;
     let _header_hash = create_entry(&nonce)?;
     Ok(nonce.id)
 }

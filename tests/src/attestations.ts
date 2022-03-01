@@ -153,7 +153,7 @@ export default async (orchestrator) => {
     let nonce = await alice_attestations.call(
       "hc_zome_attestations",
       "create_nonce",
-      boboAgentKey,
+      {with: boboAgentKey, note: "bobbo"},
     );
     console.log("nonce:", nonce)
 
