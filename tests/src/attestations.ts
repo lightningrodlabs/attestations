@@ -168,7 +168,7 @@ export default async (orchestrator) => {
     let result = await bobbo_attestations.call(
       "hc_zome_attestations",
       "fulfill_nonce",
-      {to: aliceAgentKey,
+      {with: aliceAgentKey,
        nonce},
     );
     console.log("result:", result)
