@@ -110,7 +110,7 @@ export class AttestationsAttestationDialog extends ScopedElementsMixin(LitElemen
           with: this._about,
         };
         const nonce = await this._store.createNonce(input);
-        alert(nonce)
+        this.dispatchEvent(new CustomEvent('nonce-created', { detail: nonce, bubbles: true, composed: true }));       
         break;
       case DialogType.FulfilNonce:
         const fulfill: FulfillNonceInput = {

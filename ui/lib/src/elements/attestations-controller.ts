@@ -27,6 +27,7 @@ import {EntryHashB64} from "@holochain-open-dev/core-types";
 import { VerifyAttestation } from "./verify-attestation";
 import { CopyableContent } from "./copiable-content";
 import { AttestationFolk } from "./attestation-folk";
+import { AttestationsNotifyDialog } from "./attestations-notify-dialog";
 
 /**
  * @element attestations-controller
@@ -191,10 +192,19 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     this.attestationDialogElem.open(type);
   }
 
+  async openNotifyDialog(title: string, notification: string) {
+    const elem = this.notifyDialogElem
+    elem.notification = notification
+    elem.title = title
+    elem.open();
+  }
+
   get attestationDialogElem() : AttestationsAttestationDialog {
     return this.shadowRoot!.getElementById("attestation-dialog") as AttestationsAttestationDialog;
   }
-
+  get notifyDialogElem() : AttestationsNotifyDialog {
+    return this.shadowRoot!.getElementById("notify-dialog") as AttestationsNotifyDialog;
+  }
   private async handleAttestationSelected(e: any, attestations: Dictionary<AttestationOutput>): Promise<void> {
     const index = e.detail.index;
     const attestationList = e.target as List;
@@ -322,8 +332,11 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
 
     <attestations-attestation-dialog id="attestation-dialog"
                         .myProfile=${this._myProfile.value}
-                        @attestation-added=${(e:any) => this._currentAttestationEh = e.detail}>
+                        @attestation-added=${(e:any) => this._currentAttestationEh = e.detail}
+                        @nonce-created=${(e:any) => this.openNotifyDialog(`Nonce Created`,`Nonce value: ${e.detail}`)}
+                        >
     </attestations-attestation-dialog>
+    <attestations-notify-dialog id="notify-dialog"></attestations-notify-dialog>
   </div>
 </mwc-drawer>
 `;
@@ -344,6 +357,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
       "mwc-icon-button": IconButton,
       "mwc-button": Button,
       "attestations-attestation-dialog" : AttestationsAttestationDialog,
+      "attestations-notify-dialog" : AttestationsNotifyDialog,
       "attestations-attestation": AttestationsAttestation,
       "mwc-formfield": Formfield,
       'agent-avatar': AgentAvatar,
