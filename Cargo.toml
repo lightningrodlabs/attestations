@@ -1,5 +1,4 @@
 [workspace]
-resolver = "2"
 members = [
   "dna/zomes/attestations",
   "dna/zomes/profiles"

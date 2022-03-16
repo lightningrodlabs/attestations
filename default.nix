@@ -1,14 +1,14 @@
 let
-  holonixRev = "cb8eb67e55b4f291f0868bbd3439a5e6f006e49f";
-  holonixPath = builtins.fetchTarball "https://github.com/holochain/holonix/archive/${holonixRev}.tar.gz";
+  holonixPath = (import ./nix/sources.nix).holonix; # points to the current state of the Holochain repository
   holonix = import (holonixPath) {
-    holochainVersionId = "v0_0_127";
+    holochainVersionId = "v0_0_129"; # specifies the Holochain version
   };
   nixpkgs = holonix.pkgs;
 in nixpkgs.mkShell {
   inputsFrom = [ holonix.main ];
   packages = with nixpkgs; [
-    # Additional packages go here
+    niv
     nodejs-16_x
+    # any additional packages needed for this project, e. g. Nodejs
   ];
 }
