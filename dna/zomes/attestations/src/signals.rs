@@ -1,5 +1,6 @@
 use holo_hash::{AgentPubKeyB64, EntryHashB64};
 
+use attestations_core::Attestation;
 use crate::attestation::*;
 
 #[derive(Serialize, Deserialize, SerializedBytes, Debug)]
@@ -26,7 +27,7 @@ impl SignalPayload {
 
 #[hdk_extern]
 fn recv_remote_signal(signal: ExternIO) -> ExternResult<()> {
-    let sig: SignalPayload = signal.decode()?;
+    let sig: SignalPayload = signal.decode().map_err(|e| wasm_error!(e.into()))?;
     debug!("Received signal {:?}", sig);
     Ok(emit_signal(&sig)?)
 }
@@ -46,6 +47,6 @@ fn notify(input: NotifyInput) -> ExternResult<()> {
         folks.push(a.into())
     }
     debug!("Sending signal {:?} to {:?}", input.signal, input.folks);
-    remote_signal(ExternIO::encode(input.signal)?, folks)?;
+    remote_signal(ExternIO::encode(input.signal).map_err(|e| wasm_error!(e.into()))?, folks)?;
     Ok(())
 }

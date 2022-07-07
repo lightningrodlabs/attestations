@@ -1,7 +1,8 @@
 [workspace]
 members = [
   "dna/zomes/attestations",
-  "dna/zomes/profiles"
+  "dna/zomes/attestations_core"
+#  "dna/zomes/profiles"
   ]
 
 [profile.dev]

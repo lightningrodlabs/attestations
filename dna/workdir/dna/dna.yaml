@@ -1,10 +1,18 @@
 ---
 manifest_version: "1"
 name: attestations
-uuid: 00000000-0000-0000-0000-000000000000
-properties: ~
-zomes:
-  - name: hc_zome_attestations
-    bundled: ../../../target/wasm32-unknown-unknown/release/attestations.wasm
-  - name: profiles
-    bundled: ../../../target/wasm32-unknown-unknown/release/profiles.wasm
+integrity:
+  uid: 00000000-0000-0000-0000-000000000000
+  properties: ~
+  origin_time: 2022-02-11T23:05:19.470323Z
+  zomes:
+    - name: hc_zome_attestations_core
+      bundled: ../../../target/wasm32-unknown-unknown/release/attestations_core.wasm
+  # - name: profiles
+  #   bundled: ../../../target/wasm32-unknown-unknown/release/profiles.wasm
+coordinator:
+  zomes:
+    - name: hc_zome_attestations
+      bundled: ../../../target/wasm32-unknown-unknown/release/attestations.wasm
+      dependencies:
+        - name: hc_zome_attestations

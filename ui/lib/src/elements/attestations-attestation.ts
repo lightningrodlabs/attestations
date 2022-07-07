@@ -70,7 +70,7 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
                 <div>Bare Verifiable: <copiable-content .content=${encode(this.attestationOutput.verifiable)}></copiable-content></div>
                 <div>Full Verifiable: <copiable-content .content=${
                 encode({
-                  signedHeaders: this.attestationOutput.verifiable.signedHeaders, attestation: this.attestationOutput.content})}></copiable-content></div>
+                  signedActions: this.attestationOutput.verifiable.signedActions, attestation: this.attestationOutput.content})}></copiable-content></div>
                 </div>
               `
             })}

@@ -1,4 +1,5 @@
-import { EntryHashB64, HeaderHashB64, AgentPubKeyB64, serializeHash } from '@holochain-open-dev/core-types';
+import { EntryHashB64, ActionHashB64, AgentPubKeyB64 } from '@holochain-open-dev/core-types';
+import { serializeHash } from '@holochain-open-dev/utils';
 import { CellClient } from '@holochain-open-dev/cell-client';
 import { writable, Writable, derived, Readable, get } from 'svelte/store';
 
@@ -41,12 +42,12 @@ export class AttestationsStore {
   profilesStore: ProfilesStore,
   zomeName = 'hc_zome_attestations'
   ) {
-    this.myAgentPubKey = serializeHash(cellClient.cellId[1]);
+    this.myAgentPubKey = serializeHash(cellClient.cell.cell_id[1]);
     this.profiles = profilesStore;
     this.service = new AttestationsService(cellClient, zomeName);
 
     cellClient.addSignalHandler( signal => {
-      if (! areEqual(cellClient.cellId[0],signal.data.cellId[0]) || !areEqual(cellClient.cellId[1], signal.data.cellId[1])) {
+      if (! areEqual(cellClient.cell.cell_id[0],signal.data.cellId[0]) || !areEqual(cellClient.cell.cell_id[1], signal.data.cellId[1])) {
         return
       }
       console.log("SIGNAL",signal)

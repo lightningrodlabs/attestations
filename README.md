@@ -7,8 +7,8 @@ Verifiable claims in the holochain world, i.e. "Who said what about/to whom"
 Cryptographically verifiable claims are quite usefull for a number of scenarios, see: Wiki.
 
 Interestingly, every entry committe by an agent in a holochain application can be used as a veriable claim,
-because Holochain keeps track of the signed headers of every entry which include the entry hash. Holochain
-natively validates these headers to ensure data integrity.
+because Holochain keeps track of the signed actions of every entry which include the entry hash. Holochain
+natively validates these actions to ensure data integrity.
 
 By creating a very simple entry of the form:
 
@@ -19,7 +19,7 @@ struct Attestation {
 }
 ```
 
-agents can claim arbitrary content about any other agent in a holochain DHT space. The signed headers of such
+agents can claim arbitrary content about any other agent in a holochain DHT space. The signed actions of such
 entries can be shared and thus that claim by be confirmed by anyone as having been said by the attester.
 
 ### Use cases

@@ -1,5 +1,6 @@
 import { CellClient } from '@holochain-open-dev/cell-client';
-import { serializeHash, EntryHashB64, AgentPubKeyB64 } from '@holochain-open-dev/core-types';
+import { serializeHash } from '@holochain-open-dev/utils';
+import { EntryHashB64, AgentPubKeyB64 } from '@holochain-open-dev/core-types';
 import {AttestationOutput, Attestation, AttestationEntry, Signal, GetAttestationsInput, Verifiable, FulfillNonceInput, CreateNonceInput} from './types';
 
 export class AttestationsService {
@@ -9,7 +10,7 @@ export class AttestationsService {
   ) {}
 
   get myAgentPubKey() : AgentPubKeyB64 {
-    return serializeHash(this.cellClient.cellId[1]);
+    return serializeHash(this.cellClient.cell.cell_id[1]);
   }
 
   async createAttestation(attestation: Attestation): Promise<EntryHashB64> {

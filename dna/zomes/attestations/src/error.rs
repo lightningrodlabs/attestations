@@ -21,6 +21,6 @@ pub type AttestationsResult<T> = Result<T, AttestationsError>;
 
 impl From<AttestationsError> for WasmError {
     fn from(c: AttestationsError) -> Self {
-        WasmError::Guest(c.to_string())
+        wasm_error!(WasmErrorInner::Guest(c.to_string()))
     }
 }
