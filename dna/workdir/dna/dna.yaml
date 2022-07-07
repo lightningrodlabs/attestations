@@ -15,4 +15,4 @@ coordinator:
     - name: hc_zome_attestations
       bundled: ../../../target/wasm32-unknown-unknown/release/attestations.wasm
       dependencies:
-        - name: hc_zome_attestations
+        - name: hc_zome_attestations_core
