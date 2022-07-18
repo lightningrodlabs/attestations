@@ -11,6 +11,6 @@ name = "attestations_core"
 [dependencies]
 serde = "1"
 derive_more = "0"
-hdk = {version = "0.0.140", features = ["encoding"]}
-holochain_deterministic_integrity = {version = "0.0.12"}
+hdk = {version = "0.0.142", features = ["encoding"]}
+hdi = {version = "0.0.14"}
 
