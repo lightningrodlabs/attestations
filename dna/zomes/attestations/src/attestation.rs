@@ -44,10 +44,10 @@ pub fn create_attestation(input: Attestation) -> ExternResult<EntryHashB64> {
     let _action_hash = create_entry(EntryTypes::Attestation(input.clone()))?;
     let hash = hash_entry(input.clone())?;
 //    emit_signal(&SignalPayload::new(hash.clone().into(), Message::NewAttestation(input.clone())))?;
-    create_link(get_my_attestations_base()?, hash.clone(), LinkTypes::All, LinkTag::new("by"))?;
-    create_link(get_agent_attestations_base(input.about.clone().into())?, hash.clone(), LinkTypes::All, LinkTag::new("of"))?;
+    create_link(get_my_attestations_base()?, hash.clone(), LinkTypes::By, ())?;
+    create_link(get_agent_attestations_base(input.about.clone().into())?, hash.clone(), LinkTypes::Of, ())?;
     let path = Path::from(input.content);
-    create_link(path.path_entry_hash()?, hash.clone(), LinkTypes::All, LinkTag::from(AgentPubKey::from(input.about).as_ref().to_vec()))?;
+    create_link(path.path_entry_hash()?, hash.clone(), LinkTypes::Who, LinkTag::from(AgentPubKey::from(input.about).as_ref().to_vec()))?;
     Ok(hash.into())
 }
 
@@ -64,11 +64,11 @@ pub fn get_attestations(input: GetAttestationsInput) -> ExternResult<Vec<Attesta
     match input.content {
         Some(content) => {
             let base = Path::from(content).path_entry_hash()?;
-            let tag = match input.of {
-                Some(agent) => Some(LinkTag::new(AgentPubKey::from(agent).as_ref().to_vec())),
-                None => None
+            let (link_type, tag) = match input.of {
+                Some(agent) =>  (Some(LinkTypes::Who), Some(LinkTag::new(AgentPubKey::from(agent).as_ref().to_vec()))),
+                None => (None, None)
             };
-            let attestations = get_attestations_inner(base, tag)?;
+            let attestations = get_attestations_inner(base, link_type, tag)?;
             Ok(attestations)
         },
         None => {
@@ -76,14 +76,14 @@ pub fn get_attestations(input: GetAttestationsInput) -> ExternResult<Vec<Attesta
             let mut results: HashMap<EntryHashB64,AttestationOutput> = HashMap::new();
             if let Some(agent) = input.of {
                     let base = get_agent_attestations_base(agent.into())?;
-                    let attestations = get_attestations_inner(base, Some(LinkTag::new("of")))?;
+                    let attestations = get_attestations_inner(base, Some(LinkTypes::Of), None)?;
                     for a in attestations {
                         results.insert(a.hash.clone(), a);
                     }
             };
             if let Some(agent) = input.by {
                 let base = get_agent_attestations_base(agent.into())?;
-                let attestations = get_attestations_inner(base, Some(LinkTag::new("by")))?;
+                let attestations = get_attestations_inner(base, Some(LinkTypes::By), None)?;
                 for a in attestations {
                     results.insert(a.hash.clone(), a);
                 }
@@ -97,13 +97,16 @@ pub fn get_attestations(input: GetAttestationsInput) -> ExternResult<Vec<Attesta
 #[hdk_extern]
 fn get_my_attestations(_: ()) -> ExternResult<Vec<AttestationOutput>> {
     let base = get_my_attestations_base()?;
-    let records = get_attestations_inner(base,Some(LinkTag::new("by")))?;
+    let records = get_attestations_inner(base,Some(LinkTypes::By), None)?;
     Ok(records)
 }
 
 
-pub fn get_attestations_inner(base: EntryHash, maybe_tag: Option<LinkTag>) -> AttestationsResult<Vec<AttestationOutput>> {
-    let links = get_links(base, .., maybe_tag)?;
+pub fn get_attestations_inner(base: EntryHash, maybe_link_type: Option<LinkTypes>, maybe_tag: Option<LinkTag>) -> AttestationsResult<Vec<AttestationOutput>> {
+    let links = match maybe_link_type {
+        Some(link_type) => get_links(base, link_type, maybe_tag)?,
+        None => get_links(base, .., maybe_tag)?,
+    };
 
     let get_input = links
         .into_iter()

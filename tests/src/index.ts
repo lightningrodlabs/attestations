@@ -45,8 +45,9 @@ test("attestations basic tests", async (t) => {
       content: "Cool Person",
       about: boboAgentKey,
     };
-
-    const attestation1_hash: EntryHashB64 = await alice_attestations.callZome( {
+    let  attestation1_hash: EntryHashB64 = ""
+    try {
+     attestation1_hash = await alice_attestations.callZome( {
       zome_name: "hc_zome_attestations",
       fn_name: "create_attestation",
       payload: attestation1
@@ -54,6 +55,9 @@ test("attestations basic tests", async (t) => {
     );
     t.ok(attestation1_hash);
     console.log("attestation1_hash", attestation1_hash);
+  } catch(e) {
+    console.log("HERE", e)
+  }
 
     let attestations : Array<AttestationOutput> = await alice_attestations.callZome({
       zome_name: "hc_zome_attestations",
