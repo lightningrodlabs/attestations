@@ -34,19 +34,7 @@ pub enum LinkTypes {
     Of,
     By,
     Who,
-    Bad,
 }
-impl From<LinkType> for LinkTypes {
-    fn from(x: LinkType) -> Self {
-        match x.0 {
-            0 => LinkTypes::Of,
-            1 => LinkTypes::By,
-            2 => LinkTypes::Who,
-            _ => LinkTypes::Bad,
-        }
-    }
-}
-
 
 #[hdk_extern]
 pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
