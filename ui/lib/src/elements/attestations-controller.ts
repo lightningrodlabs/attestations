@@ -28,6 +28,7 @@ import { VerifyAttestation } from "./verify-attestation";
 import { CopyableContent } from "./copiable-content";
 import { AttestationFolk } from "./attestation-folk";
 import { AttestationsNotifyDialog } from "./attestations-notify-dialog";
+import { serializeHash } from "@holochain-open-dev/utils";
 
 /**
  * @element attestations-controller
@@ -305,7 +306,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
         <div class="row">
           <h4> My Attestations </h4>
           <div class="column">
-          <attestation-folk .agent=${this._profiles.myAgentPubKey}></attestation-folk>
+          <attestation-folk .agent=${serializeHash(this._profiles.myAgentPubKey)}></attestation-folk>
           </div>
         </div>
         <mwc-button icon="add_circle" @click=${() => this.openAttestationDialog(DialogType.Attestation)}>Attestation</mwc-button>

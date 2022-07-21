@@ -17,50 +17,50 @@ import { RoleId, AppWebsocket } from "@holochain/client";
 import { ScopedElementsMixin } from "@open-wc/scoped-elements";
 import { LitElement, html } from "lit";
 
-
 export class AttestationsApp extends ScopedElementsMixin(LitElement) {
   @state()
   loaded = false;
 
   @state()
-  store: ProfilesStore | undefined
+  store: ProfilesStore | undefined;
 
   async firstUpdated() {
-    
     const appWebsocket = await AppWebsocket.connect(
       `ws://localhost:${process.env.HC_PORT}`
     );
-  
-    const client = new HolochainClient(appWebsocket);
-    const appInfo = await appWebsocket.appInfo( { installed_app_id: "attestations"} );
 
-    const cell = appInfo.cell_data[0]
+    const client = new HolochainClient(appWebsocket);
+    const appInfo = await appWebsocket.appInfo({
+      installed_app_id: "attestations",
+    });
+
+    const cell = appInfo.cell_data[0];
     const attestationsClient = new CellClient(client, cell);
 
-    this.store = new ProfilesStore(new ProfilesService(attestationsClient), {avatarMode: "identicon"})
+    this.store = new ProfilesStore(new ProfilesService(attestationsClient), {
+      avatarMode: "identicon",
+    });
 
-    this.store.fetchAllProfiles()
+    this.store.fetchAllProfiles();
+
+    new ContextProvider(this, profilesStoreContext, this.store);
 
     new ContextProvider(
       this,
-      profilesStoreContext,
-      this.store
+      attestationsContext,
+      new AttestationsStore(attestationsClient, this.store)
     );
-
-    new ContextProvider(this, attestationsContext, new AttestationsStore(attestationsClient, this.store));
 
     this.loaded = true;
   }
 
-
   render() {
     if (!this.loaded) return html`<span>Loading...</span>`;
     return html`
-      <profiles-context .store=${this.store}>
-        <profile-prompt></profile-prompt>
-      </profiles-context>
+      <profile-prompt>
         <attestations-controller></attestations-controller>
-<!--      <attestations-controller dummy></attestations-controller>-->
+      </profile-prompt>
+      <!--      <attestations-controller dummy></attestations-controller>-->
     `;
   }
 

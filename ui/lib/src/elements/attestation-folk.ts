@@ -10,6 +10,7 @@ import {
 } from "@holochain-open-dev/profiles";
 import { StoreSubscriber } from "lit-svelte-stores";
 import { AgentPubKeyB64 } from "@holochain-open-dev/core-types";
+import { deserializeHash } from "@holochain-open-dev/utils";
 
 export class AttestationFolk extends ScopedElementsMixin(LitElement) {
   @property() agent: AgentPubKeyB64 = "";
@@ -37,9 +38,10 @@ export class AttestationFolk extends ScopedElementsMixin(LitElement) {
   render() {
     const profile = {nickname:"fish"} // FIXME this._knownProfiles.value[this.agent];
     const showNick = this.showNick && profile
+
     return html`
         ${!this.compact? html`<div class="folk">`:""}
-          <agent-avatar agent-pub-key="${this.agent}"></agent-avatar>
+          <agent-avatar .agentPubKey=${deserializeHash(this.agent)}></agent-avatar>
           ${showNick ? html`<div>${profile.nickname}</div>`:""}
           ${this.showCopiable ? html`<copiable-content .content=${this.agent} ></copiable-content>`:""}          
         ${!this.compact? html`</div>`:""}`
