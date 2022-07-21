@@ -1,4 +1,4 @@
-import { ContextProvider } from "@holochain-open-dev/context";
+import { ContextProvider } from "@lit-labs/context";
 import { state } from "lit/decorators.js";
 import {
   AttestationsController,
@@ -17,61 +17,37 @@ import { RoleId, AppWebsocket } from "@holochain/client";
 import { ScopedElementsMixin } from "@open-wc/scoped-elements";
 import { LitElement, html } from "lit";
 
-async function setupClient() {
-  const appWebsocket = await AppWebsocket.connect(
-    `ws://localhost:${process.env.HC_PORT}`
-  );
-
-  const client = new HolochainClient(appWebsocket);
-
-  return client;
-}
-
-async function setupProfilesStore() {
-  const appWs = await AppWebsocket.connect(
-    `ws://localhost:${process.env.HC_PORT}`
-  );
-
-  const appInfo = await appWs.appInfo({
-    installed_app_id: "attestations",
-  });
-  const cell = appInfo.cell_data.find((c) => c.role_id === "attestations");
-
-  const client = new HolochainClient(appWs);
-
-  const cellClient = new CellClient(client, cell!);
-
-  const profilesStore = new ProfilesStore(new ProfilesService(cellClient), {
-    avatarMode: "avatar-optional",
-  });
-  return profilesStore;
-}
-
 
 export class AttestationsApp extends ScopedElementsMixin(LitElement) {
   @state()
   loaded = false;
 
+  @state()
+  store: ProfilesStore | undefined
+
   async firstUpdated() {
     
-    const client = await setupClient()
-    //HolochainClient.connect(`ws://localhost:${process.env.HC_PORT}`, "attestations");
-
-    const attestationsClient = client.forCell(
-      client.cellDataByRoleId('attestations')!
+    const appWebsocket = await AppWebsocket.connect(
+      `ws://localhost:${process.env.HC_PORT}`
     );
+  
+    const client = new HolochainClient(appWebsocket);
+    const appInfo = await appWebsocket.appInfo( { installed_app_id: "attestations"} );
 
-    const store = new ProfilesStore(attestationsClient, {avatarMode: "identicon"})
+    const cell = appInfo.cell_data[0]
+    const attestationsClient = new CellClient(client, cell);
 
-    store.fetchAllProfiles()
+    this.store = new ProfilesStore(new ProfilesService(attestationsClient), {avatarMode: "identicon"})
+
+    this.store.fetchAllProfiles()
 
     new ContextProvider(
       this,
       profilesStoreContext,
-      store
+      this.store
     );
 
-    new ContextProvider(this, attestationsContext, new AttestationsStore(attestationsClient, store));
+    new ContextProvider(this, attestationsContext, new AttestationsStore(attestationsClient, this.store));
 
     this.loaded = true;
   }
@@ -80,7 +56,9 @@ export class AttestationsApp extends ScopedElementsMixin(LitElement) {
   render() {
     if (!this.loaded) return html`<span>Loading...</span>`;
     return html`
+      <profiles-context .store=${this.store}>
         <profile-prompt></profile-prompt>
+      </profiles-context>
         <attestations-controller></attestations-controller>
 <!--      <attestations-controller dummy></attestations-controller>-->
     `;

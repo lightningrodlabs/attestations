@@ -60,11 +60,13 @@ export class AttestationsStore {
   }
 
   private others(): Array<AgentPubKeyB64> {
-    return Object.keys(get(this.profiles.knownProfiles)).filter((key)=> key != this.myAgentPubKey)
+    return []
+    // FIXME return Object.keys(get(this.profiles.knownProfiles)).filter((key)=> key != this.myAgentPubKey)
   }
 
   async getProfile(agent: AgentPubKeyB64) : Promise<Profile|undefined> {
-    return this.profiles.fetchAgentProfile(agent)
+    return undefined
+   // FIXME return this.profiles.fetchAgentProfile(agent)  
   }
 
   async pullMyAttestations() : Promise<Dictionary<AttestationOutput>> {

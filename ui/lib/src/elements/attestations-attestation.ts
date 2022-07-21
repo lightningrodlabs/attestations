@@ -1,7 +1,7 @@
 import {css, html, LitElement} from "lit";
 import {property, query} from "lit/decorators.js";
 
-import {contextProvided} from "@holochain-open-dev/context";
+import { contextProvided } from "@lit-labs/context";
 import {StoreSubscriber} from "lit-svelte-stores";
 import {AgentPubKeyB64} from "@holochain-open-dev/core-types";
 import {sharedStyles} from "../sharedStyles";
@@ -29,8 +29,8 @@ export class AttestationsAttestation extends ScopedElementsMixin(LitElement) {
   @contextProvided({ context: attestationsContext })
   _store!: AttestationsStore;
 
-  @contextProvided({ context: profilesStoreContext })
-  _profiles!: ProfilesStore;
+//  @contextProvided({ context: profilesStoreContext })
+//  _profiles!: ProfilesStore;
 
   folk(agent: AgentPubKeyB64) {
     return html`<attestation-folk .agent=${agent}></attestation-folk>`

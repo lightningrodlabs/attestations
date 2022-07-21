@@ -1,7 +1,7 @@
 import { css, html, LitElement } from "lit";
 import { property, query, state } from "lit/decorators.js";
 
-import { contextProvided } from "@holochain-open-dev/context";
+import { contextProvided } from "@lit-labs/context";
 import { IconButton, TextArea } from "@scoped-elements/material-web";
 import { AttestationsAttestation } from "./attestations-attestation";
 import { ScopedElementsMixin } from "@open-wc/scoped-elements";
