@@ -1,7 +1,8 @@
 import { EntryHashB64, ActionHashB64, AgentPubKeyB64 } from '@holochain-open-dev/core-types';
-import { serializeHash } from '@holochain-open-dev/utils';
+import { serializeHash, deserializeHash, HoloHashMap } from '@holochain-open-dev/utils';
 import { CellClient } from '@holochain-open-dev/cell-client';
 import { writable, Writable, derived, Readable, get } from 'svelte/store';
+import { HoloHash } from "@holochain/client";
 
 import { AttestationsService } from './attestations.service';
 import {
@@ -25,6 +26,7 @@ export class AttestationsStore {
   /** Private */
   private service : AttestationsService
   private profiles: ProfilesStore
+  private knownProfiles: Readable<HoloHashMap<Profile>> | undefined
 
   /** AttestationEh -> Attestation */
   private myAttestationsStore: Writable<Dictionary<AttestationOutput>> = writable({});
@@ -60,13 +62,22 @@ export class AttestationsStore {
   }
 
   private others(): Array<AgentPubKeyB64> {
-    return []
-    // FIXME return Object.keys(get(this.profiles.knownProfiles)).filter((key)=> key != this.myAgentPubKey)
+    if (this.knownProfiles) {
+      const map : HoloHashMap<Profile> = get(this.knownProfiles)
+      const x: Array<AgentPubKeyB64>  = map.keys().map((key) => serializeHash(key))
+      return x.filter((key) => key != this.myAgentPubKey)
+    }
+    else {
+      return []
+    }
+  }
+
+  async fetchProfiles() {
+    this.knownProfiles = await this.profiles.fetchAllProfiles()
   }
 
   async getProfile(agent: AgentPubKeyB64) : Promise<Profile|undefined> {
-    return undefined
-   // FIXME return this.profiles.fetchAgentProfile(agent)  
+   return get(await this.profiles.fetchAgentProfile(deserializeHash(agent)))  
   }
 
   async pullMyAttestations() : Promise<Dictionary<AttestationOutput>> {

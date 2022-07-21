@@ -36,7 +36,7 @@
     "cqfill": "^0.6.0",
     "emoji-picker-element": "^1.8.2",
     "lit": "^2.1.4",
-    "lit-svelte-stores": "^0.1.3",
+    "lit-svelte-stores": "^0.2.1",
     "lodash-es": "^4.17.21",
     "fast-xml-parser": "^3.20.0",
     "@types/randomcolor": "^0.5.6",
