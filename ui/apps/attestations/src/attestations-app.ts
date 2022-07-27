@@ -13,7 +13,7 @@ import {
   profilesStoreContext,
 } from "@holochain-open-dev/profiles";
 import { HolochainClient, CellClient } from "@holochain-open-dev/cell-client";
-import { RoleId, AppWebsocket } from "@holochain/client";
+import { AppWebsocket } from "@holochain/client";
 import { ScopedElementsMixin } from "@open-wc/scoped-elements";
 import { LitElement, html } from "lit";
 
