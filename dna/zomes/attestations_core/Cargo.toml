@@ -1,17 +1,16 @@
 [package]
 authors = ["eric@harris-braun.com"]
 edition = "2021"
-name = "attestations"
+name = "attestations_core"
 version = "0.0.1-alpha1"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-name = "attestations"
+name = "attestations_core"
 
 [dependencies]
-chrono = {version = "0.4", features = ['alloc', 'std']}
-derive_more = "0"
 serde = "1"
-thiserror = "1.0.20"
-attestations_core = { path = "../attestations_core" }
+derive_more = "0"
 hdk = {version = "0.0.142", features = ["encoding"]}
+hdi = {version = "0.0.14"}
+

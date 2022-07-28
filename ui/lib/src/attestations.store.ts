@@ -1,6 +1,8 @@
-import { EntryHashB64, HeaderHashB64, AgentPubKeyB64, serializeHash } from '@holochain-open-dev/core-types';
+import { EntryHashB64, ActionHashB64, AgentPubKeyB64 } from '@holochain-open-dev/core-types';
+import { serializeHash, deserializeHash, HoloHashMap } from '@holochain-open-dev/utils';
 import { CellClient } from '@holochain-open-dev/cell-client';
 import { writable, Writable, derived, Readable, get } from 'svelte/store';
+import { HoloHash } from "@holochain/client";
 
 import { AttestationsService } from './attestations.service';
 import {
@@ -24,6 +26,7 @@ export class AttestationsStore {
   /** Private */
   private service : AttestationsService
   private profiles: ProfilesStore
+  private knownProfiles: Readable<HoloHashMap<Profile>> | undefined
 
   /** AttestationEh -> Attestation */
   private myAttestationsStore: Writable<Dictionary<AttestationOutput>> = writable({});
@@ -41,12 +44,12 @@ export class AttestationsStore {
   profilesStore: ProfilesStore,
   zomeName = 'hc_zome_attestations'
   ) {
-    this.myAgentPubKey = serializeHash(cellClient.cellId[1]);
+    this.myAgentPubKey = serializeHash(cellClient.cell.cell_id[1]);
     this.profiles = profilesStore;
     this.service = new AttestationsService(cellClient, zomeName);
 
     cellClient.addSignalHandler( signal => {
-      if (! areEqual(cellClient.cellId[0],signal.data.cellId[0]) || !areEqual(cellClient.cellId[1], signal.data.cellId[1])) {
+      if (! areEqual(cellClient.cell.cell_id[0],signal.data.cellId[0]) || !areEqual(cellClient.cell.cell_id[1], signal.data.cellId[1])) {
         return
       }
       console.log("SIGNAL",signal)
@@ -59,11 +62,22 @@ export class AttestationsStore {
   }
 
   private others(): Array<AgentPubKeyB64> {
-    return Object.keys(get(this.profiles.knownProfiles)).filter((key)=> key != this.myAgentPubKey)
+    if (this.knownProfiles) {
+      const map : HoloHashMap<Profile> = get(this.knownProfiles)
+      const x: Array<AgentPubKeyB64>  = map.keys().map((key) => serializeHash(key))
+      return x.filter((key) => key != this.myAgentPubKey)
+    }
+    else {
+      return []
+    }
+  }
+
+  async fetchProfiles() {
+    this.knownProfiles = await this.profiles.fetchAllProfiles()
   }
 
   async getProfile(agent: AgentPubKeyB64) : Promise<Profile|undefined> {
-    return this.profiles.fetchAgentProfile(agent)
+   return get(await this.profiles.fetchAgentProfile(deserializeHash(agent)))  
   }
 
   async pullMyAttestations() : Promise<Dictionary<AttestationOutput>> {

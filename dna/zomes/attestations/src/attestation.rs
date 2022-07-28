@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 pub use hdk::prelude::*;
 use hdk::prelude::holo_hash::{AgentPubKeyB64, EntryHashB64};
+use attestations_core::{EntryTypes, Attestation, LinkTypes};
 
 use crate::error::*;
 //use crate::signals::*;
@@ -11,16 +12,9 @@ use crate::error::*;
 #[serde(rename_all="camelCase")]
 pub struct Verifiable {
     pub attestation: Option<Attestation>,
-    pub signed_headers: Vec<SignedHeaderHashed>,
+    pub signed_actions: Vec<SignedActionHashed>,
 }
 
-/// Attestation entry definition
-#[hdk_entry(id = "attestation")]
-#[derive(Clone)]
-pub struct Attestation {
-    pub content: String,
-    pub about: AgentPubKeyB64,
-}
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct AttestationContext {
     author: AgentPubKeyB64,
@@ -47,14 +41,13 @@ fn get_agent_attestations_base(agent: AgentPubKey) -> ExternResult<EntryHash> {
 
 #[hdk_extern]
 pub fn create_attestation(input: Attestation) -> ExternResult<EntryHashB64> {
-    let _header_hash = create_entry(&input)?;
+    let _action_hash = create_entry(EntryTypes::Attestation(input.clone()))?;
     let hash = hash_entry(input.clone())?;
 //    emit_signal(&SignalPayload::new(hash.clone().into(), Message::NewAttestation(input.clone())))?;
-    create_link(get_my_attestations_base()?, hash.clone(), LinkTag::new("by"))?;
-    create_link(get_agent_attestations_base(input.about.clone().into())?, hash.clone(), LinkTag::new("of"))?;
+    create_link(get_my_attestations_base()?, hash.clone(), LinkTypes::By, ())?;
+    create_link(get_agent_attestations_base(input.about.clone().into())?, hash.clone(), LinkTypes::Of, ())?;
     let path = Path::from(input.content);
-    path.ensure()?;
-    create_link(path.path_entry_hash()?, hash.clone(), LinkTag::from(AgentPubKey::from(input.about).as_ref().to_vec()))?;
+    create_link(path.path_entry_hash()?, hash.clone(), LinkTypes::Who, LinkTag::from(AgentPubKey::from(input.about).as_ref().to_vec()))?;
     Ok(hash.into())
 }
 
@@ -71,11 +64,11 @@ pub fn get_attestations(input: GetAttestationsInput) -> ExternResult<Vec<Attesta
     match input.content {
         Some(content) => {
             let base = Path::from(content).path_entry_hash()?;
-            let tag = match input.of {
-                Some(agent) => Some(LinkTag::new(AgentPubKey::from(agent).as_ref().to_vec())),
-                None => None
+            let (link_type, tag) = match input.of {
+                Some(agent) =>  (Some(LinkTypes::Who), Some(LinkTag::new(AgentPubKey::from(agent).as_ref().to_vec()))),
+                None => (None, None)
             };
-            let attestations = get_attestations_inner(base, tag)?;
+            let attestations = get_attestations_inner(base, link_type, tag)?;
             Ok(attestations)
         },
         None => {
@@ -83,14 +76,14 @@ pub fn get_attestations(input: GetAttestationsInput) -> ExternResult<Vec<Attesta
             let mut results: HashMap<EntryHashB64,AttestationOutput> = HashMap::new();
             if let Some(agent) = input.of {
                     let base = get_agent_attestations_base(agent.into())?;
-                    let attestations = get_attestations_inner(base, Some(LinkTag::new("of")))?;
+                    let attestations = get_attestations_inner(base, Some(LinkTypes::Of), None)?;
                     for a in attestations {
                         results.insert(a.hash.clone(), a);
                     }
             };
             if let Some(agent) = input.by {
                 let base = get_agent_attestations_base(agent.into())?;
-                let attestations = get_attestations_inner(base, Some(LinkTag::new("by")))?;
+                let attestations = get_attestations_inner(base, Some(LinkTypes::By), None)?;
                 for a in attestations {
                     results.insert(a.hash.clone(), a);
                 }
@@ -104,13 +97,16 @@ pub fn get_attestations(input: GetAttestationsInput) -> ExternResult<Vec<Attesta
 #[hdk_extern]
 fn get_my_attestations(_: ()) -> ExternResult<Vec<AttestationOutput>> {
     let base = get_my_attestations_base()?;
-    let records = get_attestations_inner(base,Some(LinkTag::new("by")))?;
+    let records = get_attestations_inner(base,Some(LinkTypes::By), None)?;
     Ok(records)
 }
 
 
-pub fn get_attestations_inner(base: EntryHash, maybe_tag: Option<LinkTag>) -> AttestationsResult<Vec<AttestationOutput>> {
-    let links = get_links(base, maybe_tag)?;
+pub fn get_attestations_inner(base: EntryHash, maybe_link_type: Option<LinkTypes>, maybe_tag: Option<LinkTag>) -> AttestationsResult<Vec<AttestationOutput>> {
+    let links = match maybe_link_type {
+        Some(link_type) => get_links(base, link_type, maybe_tag)?,
+        None => get_links(base, .., maybe_tag)?,
+    };
 
     let get_input = links
         .into_iter()
@@ -123,20 +119,20 @@ pub fn get_attestations_inner(base: EntryHash, maybe_tag: Option<LinkTag>) -> At
         .into_iter()
         .filter_map(|me| me)
         .filter_map(|details| match details {
-            Details::Entry(EntryDetails { entry, headers, .. }) => {
+            Details::Entry(EntryDetails { entry, actions, .. }) => {
                 let attestation: Attestation = entry.try_into().ok()?;
                 let hash = hash_entry(&attestation).ok()?;
                 Some(AttestationOutput {
                     hash: hash.into(),
-                    attesters: headers.clone().into_iter().map(|header| {
-                        let h = header.header();
+                    attesters: actions.clone().into_iter().map(|action| {
+                        let h = action.action();
                         AttestationContext {
                             author: h.author().clone().into(),
                             timestamp: h.timestamp(),
                         }
                     }).collect(),
                     verifiable: Verifiable {
-                        signed_headers: headers,
+                        signed_actions: actions,
                         attestation: None,
                     },
                     content: attestation,
@@ -151,24 +147,24 @@ pub fn get_attestations_inner(base: EntryHash, maybe_tag: Option<LinkTag>) -> At
 ///
 #[hdk_extern]
 pub fn verify(input: Verifiable) -> ExternResult<()>  {
-    for signed_header in input.signed_headers {
+    for signed_action in input.signed_actions {
         if let Some(ref attestation) = input.attestation {
             let hash = hash_entry(attestation)?;
-            let header_hash = signed_header.header().entry_hash().ok_or(WasmError::Guest("Failed verification: couldn't get hash from header".into()))?;
-            if  *header_hash != hash {
-                return Err(WasmError::Guest("Failed verification: attestation hash doesn't match".into()));
+            let action_hash = signed_action.action().entry_hash().ok_or(wasm_error!(WasmErrorInner::Guest("Failed verification: couldn't get hash from action".into())))?;
+            if  *action_hash != hash {
+                return Err(wasm_error!(WasmErrorInner::Guest("Failed verification: attestation hash doesn't match".into())));
             }
         }
-        let signature = signed_header.signature().clone();
-        match verify_signature(signed_header.header().author().clone(), signature, signed_header.header()) {
+        let signature = signed_action.signature().clone();
+        match verify_signature(signed_action.action().author().clone(), signature, signed_action.action()) {
             Ok(verified) => {
                 if verified {
                 } else {
-                    return Err(WasmError::Guest("Failed verification: signature doesn't match.".into()))
+                    return Err(wasm_error!(WasmErrorInner::Guest("Failed verification: signature doesn't match.".into())))
                 }
             }
             Err(e) => {
-                return Err(WasmError::Guest(format!("Failed verification: error checking signature {}", e.to_string())));
+                return Err(wasm_error!(WasmErrorInner::Guest(format!("Failed verification: error checking signature {}", e.to_string()))));
             }
         }
     }

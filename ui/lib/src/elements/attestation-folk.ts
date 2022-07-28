@@ -1,7 +1,6 @@
 import { css, html, LitElement } from "lit";
 import { property, query, state } from "lit/decorators.js";
 
-import { contextProvided } from "@holochain-open-dev/context";
 import { ScopedElementsMixin } from "@open-wc/scoped-elements";
 import { sharedStyles } from "../sharedStyles";
 import { CopyableContent } from "./copiable-content";
@@ -9,9 +8,13 @@ import {
   AgentAvatar,
   ProfilesStore,
   profilesStoreContext,
+  Profile
 } from "@holochain-open-dev/profiles";
-import { StoreSubscriber } from "lit-svelte-stores";
+import { TaskSubscriber } from "lit-svelte-stores";
 import { AgentPubKeyB64 } from "@holochain-open-dev/core-types";
+import { deserializeHash } from "@holochain-open-dev/utils";
+import { writable, Writable, derived, Readable, get } from 'svelte/store';
+import { contextProvided } from "@lit-labs/context";
 
 export class AttestationFolk extends ScopedElementsMixin(LitElement) {
   @property() agent: AgentPubKeyB64 = "";
@@ -19,11 +22,13 @@ export class AttestationFolk extends ScopedElementsMixin(LitElement) {
   @property() showCopiable: boolean = true
   @property() compact: boolean = false
   @contextProvided({ context: profilesStoreContext })
+  @property({ type: Object })
   _profiles!: ProfilesStore;
-
-  private _knownProfiles = new StoreSubscriber(
+  
+  _profileTask = new TaskSubscriber(
     this,
-    () => this._profiles.knownProfiles
+    () => this._profiles.fetchAgentProfile(deserializeHash(this.agent)),
+    () => [this._profiles, this.agent]
   );
 
   static get styles() {
@@ -36,15 +41,24 @@ export class AttestationFolk extends ScopedElementsMixin(LitElement) {
       `,
     ];
   }
-  render() {
-    const profile = this._knownProfiles.value[this.agent];
-    const showNick = this.showNick && profile
+
+  renderProfile(profile: Profile | undefined) {
+    if (!profile) return "";
     return html`
         ${!this.compact? html`<div class="folk">`:""}
-          <agent-avatar agent-pub-key="${this.agent}"></agent-avatar>
-          ${showNick ? html`<div>${profile.nickname}</div>`:""}
+          <agent-avatar .agentPubKey=${deserializeHash(this.agent)}></agent-avatar>
+          ${this.showNick ? html`<div>${profile.nickname}</div>`:""}
           ${this.showCopiable ? html`<copiable-content .content=${this.agent} ></copiable-content>`:""}          
         ${!this.compact? html`</div>`:""}`
+  }
+
+  render() {
+    return this._profileTask.render({
+      complete: profile => this.renderProfile(profile),
+      pending: () => html`Loading...`,
+    });
+
+
   }
   static get scopedElements() {
     return {

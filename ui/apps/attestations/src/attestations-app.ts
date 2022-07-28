@@ -1,4 +1,4 @@
-import { ContextProvider } from "@holochain-open-dev/context";
+import { ContextProvider } from "@lit-labs/context";
 import { state } from "lit/decorators.js";
 import {
   AttestationsController,
@@ -9,9 +9,11 @@ import {
 import {
   ProfilePrompt,
   ProfilesStore,
+  ProfilesService,
   profilesStoreContext,
 } from "@holochain-open-dev/profiles";
-import { HolochainClient } from "@holochain-open-dev/cell-client";
+import { HolochainClient, CellClient } from "@holochain-open-dev/cell-client";
+import { AppWebsocket } from "@holochain/client";
 import { ScopedElementsMixin } from "@open-wc/scoped-elements";
 import { LitElement, html } from "lit";
 
@@ -19,36 +21,46 @@ export class AttestationsApp extends ScopedElementsMixin(LitElement) {
   @state()
   loaded = false;
 
-  async firstUpdated() {
-    
-    const client = await HolochainClient.connect(`ws://localhost:${process.env.HC_PORT}`, "attestations");
+  @state()
+  store: ProfilesStore | undefined;
 
-    const attestationsClient = client.forCell(
-      client.cellDataByRoleId('attestations')!
+  async firstUpdated() {
+    const appWebsocket = await AppWebsocket.connect(
+      `ws://localhost:${process.env.HC_PORT}`
     );
 
-    const store = new ProfilesStore(attestationsClient, {avatarMode: "identicon"})
+    const client = new HolochainClient(appWebsocket);
+    const appInfo = await appWebsocket.appInfo({
+      installed_app_id: "attestations",
+    });
 
-    store.fetchAllProfiles()
+    const cell = appInfo.cell_data[0];
+    const attestationsClient = new CellClient(client, cell);
+
+    this.store = new ProfilesStore(new ProfilesService(attestationsClient), {
+      avatarMode: "identicon",
+    });
+
+    this.store.fetchAllProfiles();
+
+    new ContextProvider(this, profilesStoreContext, this.store);
 
     new ContextProvider(
       this,
-      profilesStoreContext,
-      store
+      attestationsContext,
+      new AttestationsStore(attestationsClient, this.store)
     );
-
-    new ContextProvider(this, attestationsContext, new AttestationsStore(attestationsClient, store));
 
     this.loaded = true;
   }
 
-
   render() {
     if (!this.loaded) return html`<span>Loading...</span>`;
     return html`
-        <profile-prompt></profile-prompt>
+      <profile-prompt>
         <attestations-controller></attestations-controller>
-<!--      <attestations-controller dummy></attestations-controller>-->
+      </profile-prompt>
+      <!--      <attestations-controller dummy></attestations-controller>-->
     `;
   }
 

@@ -1,9 +1,9 @@
 import { html, css, LitElement } from "lit";
 import { state, property, query } from "lit/decorators.js";
 
-import { contextProvided } from "@holochain-open-dev/context";
+import { contextProvided } from "@lit-labs/context";
 import { StoreSubscriber } from "lit-svelte-stores";
-import { Unsubscriber } from "svelte/store";
+import { Unsubscriber, Readable, get } from "svelte/store";
 
 import { sharedStyles } from "../sharedStyles";
 import {attestationsContext, Attestation, AttestationOutput, Dictionary, Signal} from "../types";
@@ -28,6 +28,7 @@ import { VerifyAttestation } from "./verify-attestation";
 import { CopyableContent } from "./copiable-content";
 import { AttestationFolk } from "./attestation-folk";
 import { AttestationsNotifyDialog } from "./attestations-notify-dialog";
+import { serializeHash } from "@holochain-open-dev/utils";
 
 /**
  * @element attestations-controller
@@ -49,7 +50,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
   @contextProvided({ context: profilesStoreContext })
   _profiles!: ProfilesStore;
 
-  _myProfile = new StoreSubscriber(this, () => this._profiles.myProfile);
+  _myProfile!: Readable<Profile | undefined> ;
   _myAttestations = new StoreSubscriber(this, () => this._store.myAttestations);
   _searchAttestations = new StoreSubscriber(this, () => this._store.searchedAttestations);
 
@@ -96,20 +97,25 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
 
 
   get myNickName(): string {
-    return this._myProfile.value.nickname;
+    const p = get(this._myProfile)
+    return p ? p.nickname : "";
   }
   get myAvatar(): string {
-    return this._myProfile.value.fields.avatar;
+    const p = get(this._myProfile)
+    return p ? p.fields.avatar : "";
   }
 
-  private subscribeProfile() {
+  private async subscribeProfile() {
+
+    this._myProfile = await this._profiles.fetchMyProfile()
+/*
     let unsubscribe: Unsubscriber;
     unsubscribe = this._profiles.myProfile.subscribe(async (profile) => {
       if (profile) {
         await this.checkInit();
       }
       // unsubscribe()
-    });
+    }); */
   }
 
   async firstUpdated() {
@@ -300,7 +306,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
         <div class="row">
           <h4> My Attestations </h4>
           <div class="column">
-          <attestation-folk .agent=${this._profiles.myAgentPubKey}></attestation-folk>
+          <attestation-folk .agent=${serializeHash(this._profiles.myAgentPubKey)}></attestation-folk>
           </div>
         </div>
         <mwc-button icon="add_circle" @click=${() => this.openAttestationDialog(DialogType.Attestation)}>Attestation</mwc-button>
@@ -331,7 +337,7 @@ export class AttestationsController extends ScopedElementsMixin(LitElement) {
     </div>
 
     <attestations-attestation-dialog id="attestation-dialog"
-                        .myProfile=${this._myProfile.value}
+                        .myProfile=${get(this._myProfile)}
                         @attestation-added=${(e:any) => this._currentAttestationEh = e.detail}
                         @nonce-created=${(e:any) => this.openNotifyDialog(`Nonce Created`,`Nonce value: ${e.detail}`)}
                         >
