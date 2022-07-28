@@ -10,8 +10,6 @@ integrity:
       bundled: ../../../target/wasm32-unknown-unknown/release/attestations_core.wasm
     - name: profiles_core
       bundled: ../../../target/wasm32-unknown-unknown/release/profiles_core.wasm
-  # - name: profiles
-  #   bundled: ../../../target/wasm32-unknown-unknown/release/profiles.wasm
 coordinator:
   zomes:
     - name: hc_zome_attestations
