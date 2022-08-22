@@ -39,13 +39,11 @@ pub enum LinkTypes {
 #[hdk_extern]
 pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
     match op {
-        Op::StoreRecord { record: _ } => Ok(ValidateCallbackResult::Valid),
+        Op::StoreRecord ( _ ) => Ok(ValidateCallbackResult::Valid),
         Op::StoreEntry { .. } => Ok(ValidateCallbackResult::Valid),
-        Op::RegisterCreateLink {
-            create_link,
-        } => {
-            let hashed = create_link.hashed;
-            let (create, _action) = hashed.into_inner();
+        Op::RegisterCreateLink (create_link) => {
+            //let hashed = create_link.hashed;
+            let (create, _action) = create_link.create_link.into_inner();
             let link_type = LinkTypes::try_from(ScopedLinkType {
                 zome_id: create.zome_id,
                 zome_type: create.link_type,
@@ -55,8 +53,8 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             } else if link_type == LinkTypes::Of {
                 Ok(ValidateCallbackResult::Valid)
             } else if link_type == LinkTypes::Who {
-                let attestation: Attestation = must_get_entry(create.target_address.into())?.try_into()?;
-                let agent = AgentPubKey::try_from(SerializedBytes::try_from(create.tag).map_err(|e| wasm_error!(e.into()))?).map_err(|e| wasm_error!(e.into()))?;
+                let attestation: Attestation = must_get_entry(create.target_address.clone().into())?.try_into()?;
+                let agent = AgentPubKey::try_from(SerializedBytes::try_from(create.tag.clone()).map_err(|e| wasm_error!(e.into()))?).map_err(|e| wasm_error!(e.into()))?;
 
                 if AgentPubKey::from(attestation.about) == agent {
                     Ok(ValidateCallbackResult::Valid)
@@ -71,7 +69,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 ))
             }
         }
-        Op::RegisterDeleteLink { create_link: _, .. } => Ok(ValidateCallbackResult::Invalid(
+        Op::RegisterDeleteLink (_)=> Ok(ValidateCallbackResult::Invalid(
             "deleting links isn't valid".to_string(),
         )),
         Op::RegisterUpdate { .. } => Ok(ValidateCallbackResult::Invalid(

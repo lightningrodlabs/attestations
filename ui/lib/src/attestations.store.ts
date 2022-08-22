@@ -1,5 +1,5 @@
 import { EntryHashB64, ActionHashB64, AgentPubKeyB64 } from '@holochain-open-dev/core-types';
-import { serializeHash, deserializeHash, HoloHashMap } from '@holochain-open-dev/utils';
+import { serializeHash, deserializeHash, AgentPubKeyMap } from '@holochain-open-dev/utils';
 import { CellClient } from '@holochain-open-dev/cell-client';
 import { writable, Writable, derived, Readable, get } from 'svelte/store';
 import { HoloHash } from "@holochain/client";
@@ -26,7 +26,7 @@ export class AttestationsStore {
   /** Private */
   private service : AttestationsService
   private profiles: ProfilesStore
-  private knownProfiles: Readable<HoloHashMap<Profile>> | undefined
+  private knownProfiles: Readable<AgentPubKeyMap<Profile>> | undefined
 
   /** AttestationEh -> Attestation */
   private myAttestationsStore: Writable<Dictionary<AttestationOutput>> = writable({});
@@ -63,7 +63,7 @@ export class AttestationsStore {
 
   private others(): Array<AgentPubKeyB64> {
     if (this.knownProfiles) {
-      const map : HoloHashMap<Profile> = get(this.knownProfiles)
+      const map : AgentPubKeyMap<Profile> = get(this.knownProfiles)
       const x: Array<AgentPubKeyB64>  = map.keys().map((key) => serializeHash(key))
       return x.filter((key) => key != this.myAgentPubKey)
     }

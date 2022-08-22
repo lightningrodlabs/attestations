@@ -9,9 +9,9 @@ crate-type = ["cdylib", "rlib"]
 name = "attestations"
 
 [dependencies]
-chrono = {version = "0.4", features = ['alloc', 'std']}
+chrono = { version = "0.4.22", default-features = false, features = ["clock", "std", "oldtime", "serde"], optional = true }
 derive_more = "0"
 serde = "1"
 thiserror = "1.0.20"
 attestations_core = { path = "../attestations_core" }
-hdk = {version = "0.0.142", features = ["encoding"]}
+hdk = {version = "0.0.147", features = ["encoding"]}
