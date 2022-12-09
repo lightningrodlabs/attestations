@@ -62,10 +62,10 @@ fn fulfill_nonce(input: FulfillNonceInput) -> ExternResult<()> {
         "hc_zome_attestations",
         "recv_fulfillment".into(),
         None,
-        ExternIO::encode(fulfillment).map_err(|e| wasm_error!(e.into()))?, //input.one_time_key.to_string(),
+        ExternIO::encode(fulfillment).map_err(|e| wasm_error!(e))?, //input.one_time_key.to_string(),
     )?;
     if let ZomeCallResponse::Ok(io) = result {
-        let decoded_result: () = ExternIO::decode(&io).map_err(|e| wasm_error!(e.into()))?;
+        let decoded_result: () = ExternIO::decode(&io).map_err(|e| wasm_error!(e))?;
         debug!("got return value {:?}", decoded_result);
         Ok(())
     } else {
@@ -94,7 +94,7 @@ fn recv_fulfillment(input: ExternIO) -> ExternResult<()> {
     let me = agent_info()?.agent_latest_pubkey;
     debug!("agent info: {:?}", me);
     let meb64: AgentPubKeyB64 = me.into();
-    let fulfillment: FulfillNonceWire = ExternIO::decode(&input).map_err(|e| wasm_error!(e.into()))?;
+    let fulfillment: FulfillNonceWire = ExternIO::decode(&input).map_err(|e| wasm_error!(e))?;
 
     // lookup nonce private entry locally and confirm that the signature and the caller match
     // by building a verifiable with a constructed attestation and calling verify

@@ -45,7 +45,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             //let hashed = create_link.hashed;
             let (create, _action) = create_link.create_link.into_inner();
             let link_type = LinkTypes::try_from(ScopedLinkType {
-                zome_id: create.zome_id,
+                zome_index: create.zome_index,
                 zome_type: create.link_type,
             })?;
             if link_type == LinkTypes::By {
@@ -54,7 +54,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 Ok(ValidateCallbackResult::Valid)
             } else if link_type == LinkTypes::Who {
                 let attestation: Attestation = must_get_entry(create.target_address.clone().into())?.try_into()?;
-                let agent = AgentPubKey::try_from(SerializedBytes::try_from(create.tag.clone()).map_err(|e| wasm_error!(e.into()))?).map_err(|e| wasm_error!(e.into()))?;
+                let agent = AgentPubKey::try_from(SerializedBytes::try_from(create.tag.clone()).map_err(|e| wasm_error!(e))?).map_err(|e| wasm_error!(e))?;
 
                 if AgentPubKey::from(attestation.about) == agent {
                     Ok(ValidateCallbackResult::Valid)

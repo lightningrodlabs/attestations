@@ -110,7 +110,7 @@ pub fn get_attestations_inner(base: EntryHash, maybe_link_type: Option<LinkTypes
 
     let get_input = links
         .into_iter()
-        .map(|link| GetInput::new(link.target.into(), GetOptions::default()))
+        .map(|link| GetInput::new(EntryHash::from(link.target).into(), GetOptions::default()))
         .collect();
 
     let attestation_elements = HDK.with(|hdk| hdk.borrow().get_details(get_input))?;

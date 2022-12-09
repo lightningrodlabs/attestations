@@ -14,4 +14,4 @@ derive_more = "0"
 serde = "1"
 thiserror = "1.0.20"
 attestations_core = { path = "../attestations_core" }
-hdk = {version = "0.0.147", features = ["encoding"]}
+hdk = {version = "0.0.163", features = ["encoding"]}
