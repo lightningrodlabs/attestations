@@ -4,7 +4,7 @@ Verifiable claims in the holochain world, i.e. "Who said what about/to whom"
 
 ## Context
 
-Cryptographically verifiable claims are quite usefull for a number of scenarios, see: Wiki.
+Cryptographically verifiable claims are quite usefull for a number of scenarios, see: [W3C Technical Report](https://www.w3.org/TR/vc-use-cases/).
 
 Interestingly, every entry committe by an agent in a holochain application can be used as a veriable claim,
 because Holochain keeps track of the signed actions of every entry which include the entry hash. Holochain
